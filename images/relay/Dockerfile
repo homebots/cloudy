@@ -1,4 +1,4 @@
-FROM d.homebots.io/v2/node
+FROM homebots-node
 RUN cd /home \
   && git clone https://github.com/homebots/relay.git relay \
   && cd relay && npm ci
