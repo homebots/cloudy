@@ -1,2 +1,2 @@
 FROM node:lts-alpine
-RUN apt install git ssh
+RUN set -xe && apk add --no-cache bash git openssh
