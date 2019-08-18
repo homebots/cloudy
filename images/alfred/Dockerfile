@@ -1,7 +1,7 @@
 FROM nginx:alpine
 WORKDIR /home/alfred
 RUN apk add unzip wget \
-  && wget -O alfred.zip https://github.com/homebots/alfred/archive/master.zip \
+  && wget --no-verbose -q -O alfred.zip https://github.com/homebots/alfred/archive/master.zip \
   && unzip -qq alfred.zip \
   && rm alfred.zip \
   && rm -rf /usr/share/nginx/html \
