@@ -1,7 +1,10 @@
 FROM homebots-node
+
 RUN cd /home \
-  && git clone https://github.com/homebots/jsonstore.git store \
-  && cd store \
+  && git clone https://github.com/homebots/jsonstore.git storage \
+  && cd storage \
   && npm ci
 
-CMD [ "ts-node", "/home/store/server.ts" ]
+WORKDIR /home/storage
+
+CMD [ "./node_modules/.bin/ts-node", "/home/storage/server.ts" ]
