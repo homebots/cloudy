@@ -10,6 +10,13 @@
       "projectRoot": "images/alfred",
       "service": "alfred",
       "expose": ["2000:80"]
+    },
+    {
+      "name": "homebots-relay",
+      "projectRoot": "images/relay",
+      "service": "hub",
+      "expose": ["2999:2999", "3000:3000"],
+      "vars": ["SSL=1", "HTTP_PORT=2999", "SOCKET_PORT=3000", "DEBUG=1"]
     }
   ]
 }
