@@ -8,7 +8,6 @@
     {
       "name": "homebots-alfred",
       "projectRoot": "images/alfred",
-      "buildArgs": ["CACHEBUST=$(date +%s)"],
       "service": "alfred",
       "expose": ["2000:80"]
     }
