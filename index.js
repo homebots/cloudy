@@ -78,7 +78,7 @@ const server = http.createServer((req, res) => {
       break;
 
     case req.method === 'GET' && req.url === '/discover':
-      res.end(JSON.stringify(projects.process.map(p => p.service).filter(Boolean), null, 2));
+      res.end(JSON.stringify(projects.projects.map(p => p.service).filter(Boolean), null, 2));
       break;
 
     case req.method === 'GET' && req.url === '/':
