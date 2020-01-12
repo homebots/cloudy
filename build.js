@@ -1,7 +1,6 @@
 const http = require('http');
-const https = require('https');
 const { parse } = require('querystring');
-const projects = require('./projects.json.js');
+const projects = require('./projects.json');
 const sh = process.env.DEBUG ? (...args) => console.log(...args) || '' : require('child_process').spawnSync;
 
 const registry = projects.registry;
@@ -19,11 +18,12 @@ const deploy = (p) => {
   const ports = p.expose ? p.expose.map(ports => `-p${ports}`) : [];
   const envVars = p.vars ? p.vars.map(env => ['-e', env]).reduce((a, b) => a.concat(b)) : [];
 
-  run('docker', ['kill', p.service]);
+  run('docker', ['stop', p.service]);
   run('docker', ['run', '--rm', '-d', '--name', p.service, ...ports, ...envVars, p.tag]);
 }
 
 function rebuild() {
+  run('git', ['pull', '--rebase']);
   projects.projects.forEach(project => {
     build(project);
     publish(project);
@@ -39,6 +39,10 @@ function readBody(req, callback) {
 
 const server = http.createServer((req, res) => {
   switch (true) {
+    case req.method === 'POST' && req.url === '/reload':
+      server.close();
+      break;
+
     case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
       readBody(req, (body) => {
         if (body.token === httpSecret) {
@@ -71,6 +75,14 @@ const server = http.createServer((req, res) => {
         res.writeHead(404);
         res.end('');
       });
+      break;
+
+    case req.method === 'GET' && req.url === '/discover':
+      res.end(JSON.stringify(projects.process.map(p => p.service).filter(Boolean), null, 2));
+      break;
+
+    case req.method === 'GET' && req.url === '/':
+      require('fs').createReadStream(__dirname + '/index.html').pipe(res);
       break;
 
     default:

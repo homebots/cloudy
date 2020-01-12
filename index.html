@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title></title>
+  <style>
+  .right { text-align: right; }
+  .machine { padding: 1rem; }
+  .flex { display: flex; }
+  .flex-grow { flex-grow: 2; }
+  </style>
+</head>
+<body>
+  <div class="right"><button click="redeployAll()">all</button></div>
+  <div class="machines">
+    <div class="machine flex" data-name="_name">
+      <div class="status">_status</div>
+      <div class="grow">_name</div>
+      <div><button click="deploy(arguments[0])">deploy</button></div>
+    </div>
+  </div>
+
+  <script>
+    const formHeader = { 'content-type': 'application/x-www-form-urlencoded' }
+
+    fetch('https://cloud.homebots.io/discover').then(r => r.json()).then(output => {
+      const machines = document.querySelector('.machines');
+      const template = machines.innerHTML;
+      const chunks = [];
+
+      output.forEach(service => {
+        chunks.push(template.replace('%status%', '*').replace('%name%', service));
+      });
+
+      machines.innerHTML = chunks.join('');
+    });
+
+    function deploy(name) {
+      fetch('https://cloud.homebots.io/deploy/' + name, { method: 'POST', headers: formHeader, body: 'token=' + localStorage.getItem('key') })
+        .then(() => window.location.reload());
+    }
+
+    function redeployAll() {
+      fetch('https://cloud.homebots.io/deploy' + name, { method: 'POST', headers: formHeader, body: 'token=' + localStorage.getItem('key') })
+        .then(() => window.location.reload());
+    }
+  </script>
+</body>
+</html>

@@ -7,11 +7,10 @@
     },
     {
       "tag": "homebots-alfred",
-      "projectRoot": "images/node",
+      "projectRoot": "images/alfred",
       "buildArgs": ["CACHEBUST=$(date +%s)"],
       "service": "alfred",
-      "expose": ["2000:80"],
-      "vars": ["SSL=1"]
+      "expose": ["2000:80"]
     }
   ]
 }
