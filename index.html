@@ -29,7 +29,7 @@
     <div class="machines">
       <div class="d-flex machine" data-name="_name">
         <div>
-          <span class="badge badge-success">_status</span>
+          <span class="badge badge-_statusCls">_status</span>
         </div>
         <div class="flex-grow-1">_name</div>
         <div>
@@ -44,13 +44,22 @@
     const authToken = localStorage.getItem('key');
     const baseUrl = 'https://cloud.homebots.io';
 
-    fetch(`${baseUrl}/discover`).then(r => r.json()).then(output => {
+    Promise.all([
+      fetch(`${baseUrl}/discover`).then(r => r.json()),
+      fetch(`${baseUrl}/status`).then(r => r.json()),
+    ]).then(([images, status]) => {
       const machines = document.querySelector('.machines');
       const template = machines.innerHTML;
+      const online = status.reduce((map, a) => ({ ...map, [a.name]: true }), {});
       const chunks = [];
 
-      output.forEach(service => {
-        chunks.push(template.replace('_status', '*').replace(/_name/g, service));
+      images.forEach(service => {
+        const isOnline = online[service];
+        chunks.push(template
+          .replace('_statusCls', isOnline ? 'success' : 'danger')
+          .replace('_status', '&nbsp;')
+          .replace(/_name/g, service)
+        );
       });
 
       machines.innerHTML = chunks.join('');

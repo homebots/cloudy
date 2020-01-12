@@ -14,9 +14,10 @@ const image = (p) => `${configuration.registry}/${p.name}:latest`;
 const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
 const publish = (p) => run('docker', ['push', image(p)]);
 const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
+const json = (x) => JSON.stringify(x, null, 2);
 
 const run = (command, args) => {
-  log(command, ...args);
+  log(command, args);
   log(prefix(sh(command, args)));
 };
 
@@ -97,7 +98,12 @@ const server = http.createServer((req, res) => {
 
     case req.method === 'GET' && req.url === '/discover':
       log(`discovered by ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
-      res.end(JSON.stringify(configuration.projects.map(p => p.service).filter(Boolean), null, 2));
+      res.end(json(configuration.projects.map(p => p.service).filter(Boolean)));
+      break;
+
+    case req.method === 'GET' && req.url === '/status':
+      const services = sh('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').map(name => ({ name }));
+      res.end(json(services));
       break;
 
     case req.method === 'GET' && req.url === '/':
