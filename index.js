@@ -42,7 +42,7 @@ const server = http.createServer((req, res) => {
     case req.method === 'POST' && req.url === '/reload':
       run('git', ['pull', '--rebase']);
       res.end('');
-      server.close();
+      process.exit(0);
       break;
 
     case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
