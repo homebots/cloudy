@@ -6,23 +6,45 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title></title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+  <style>
+  .if-key {
+    visibility: hidden;
+  }
+
+  .with-key .if-key {
+    visibility: visible;
+  }
+
+  .machine > * {
+    padding: .5rem 1rem;
+  }
+  </style>
 </head>
 <body>
   <div class="container">
-    <div class="text-right mb-4"><button click="redeployAll()" class="btn btn-primary">reload all</button></div>
+    <div class="text-right mb-4">
+      <button onclick="update()" class="btn btn-outline-info if-key">update</button>
+      <button onclick="redeployAll()" class="btn btn-primary if-key">reload all</button>
+    </div>
     <div class="machines">
-      <div class="d-flex" data-name="_name">
-        <div class="badge badge-success">_status</div>
+      <div class="d-flex machine" data-name="_name">
+        <div>
+          <span class="badge badge-success">_status</span>
+        </div>
         <div class="flex-grow-1">_name</div>
-        <div><button click="deploy(arguments[0])" type="button" class="btn btn-primary btn-sm">reload</button></div>
+        <div>
+          <button onclick="deploy('_name')" type="button" class="btn btn-primary btn-sm if-key">reload</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    const formHeader = { 'content-type': 'application/x-www-form-urlencoded' }
+    const formHeader = { 'content-type': 'application/x-www-form-urlencoded' };
+    const authToken = localStorage.getItem('key');
+    const baseUrl = 'https://cloud.homebots.io';
 
-    fetch('https://cloud.homebots.io/discover').then(r => r.json()).then(output => {
+    fetch(`${baseUrl}/discover`).then(r => r.json()).then(output => {
       const machines = document.querySelector('.machines');
       const template = machines.innerHTML;
       const chunks = [];
@@ -34,15 +56,27 @@
       machines.innerHTML = chunks.join('');
     });
 
+    function postAndReload(url) {
+      fetch(url, { method: 'POST', headers: formHeader, body: 'token=' + authToken }).then(() => window.location.reload());
+    }
+
     function deploy(name) {
-      fetch('https://cloud.homebots.io/deploy/' + name, { method: 'POST', headers: formHeader, body: 'token=' + localStorage.getItem('key') })
-        .then(() => window.location.reload());
+      postAndReload(`${baseUrl}/deploy/${name}`);
     }
 
     function redeployAll() {
-      fetch('https://cloud.homebots.io/deploy' + name, { method: 'POST', headers: formHeader, body: 'token=' + localStorage.getItem('key') })
-        .then(() => window.location.reload());
+      postAndReload(`${baseUrl}/deploy`);
     }
+
+    function update() {
+      postAndReload(`${baseUrl}/reload`);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (authToken) {
+        document.body.classList.add('with-key');
+      }
+    });
   </script>
 </body>
 </html>
