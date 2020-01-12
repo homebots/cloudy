@@ -2,11 +2,11 @@
   "registry": "d.homebots.io/v2",
   "projects": [
     {
-      "tag": "homebots-node",
+      "name": "homebots-node",
       "projectRoot": "images/node"
     },
     {
-      "tag": "homebots-alfred",
+      "name": "homebots-alfred",
       "projectRoot": "images/alfred",
       "buildArgs": ["CACHEBUST=$(date +%s)"],
       "service": "alfred",
