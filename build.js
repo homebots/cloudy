@@ -1,16 +1,82 @@
-const http = require('https');
-const sh = require('child_process').spawnSync;
-const dockerfiles = require('./dockerfiles.json');
-const deployHeaders = { 'X-Http-Secret': process.env.HTTP_SECRET || '' };
-const registry = dockerfiles.registry;
+const http = require('http');
+const https = require('https');
+const { parse } = require('querystring');
+const projects = require('./projects.json.js');
+const sh = process.env.DEBUG ? (...args) => console.log(...args) || '' : require('child_process').spawnSync;
 
+const registry = projects.registry;
+const formHeader = 'application/x-www-form-urlencoded';
+const httpSecret = sh('cat', ['.key']);
+
+const image = (p) => `${registry}/${p.tag}`;
+const buildArgs = (p) => p.buildArgs ? p.buildArgs.map(s => `--build-arg ${s}`) : [];
 const run = (command, args) => sh(command, args, { stdio: 'inherit' }).toString('utf8');
-const build = (p) => run('docker', ['build', '--no-cache', '-t', `${registry}/${p.tag}`, `${p.projectRoot}`]);
-const publish = (p) => run('docker', ['push', `${registry}/${p.tag}`]);
-const deploy = (p) => http.get(`https://hooks.homebots.io/deploy/${p.name}`, { headers: deployHeaders }, response => response.pipe(process.stdout));
+const publish = (p) => run('docker', ['push', image(p)]);
+const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
+const deploy = (p) => {
+  if (!p.service) return;
 
-dockerfiles.projects.forEach(project => {
-  build(project);
-  publish(project);
-  deploy(project);
-});
+  const ports = p.expose ? p.expose.map(ports => `-p${ports}`) : [];
+  const envVars = p.vars ? p.vars.map(env => ['-e', env]).reduce((a, b) => a.concat(b)) : [];
+
+  run('docker', ['kill', p.service]);
+  run('docker', ['run', '--rm', '-d', '--name', p.service, ...ports, ...envVars, p.tag]);
+}
+
+function rebuild() {
+  projects.projects.forEach(project => {
+    build(project);
+    publish(project);
+    deploy(project);
+  });
+}
+
+function readBody(req, callback) {
+  let body = '';
+  req.on('data', chunk => body += chunk.toString());
+  req.on('end', () => callback(parse(body)));
+}
+
+const server = http.createServer((req, res) => {
+  switch (true) {
+    case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
+      readBody(req, (body) => {
+        if (body.token === httpSecret) {
+          rebuild();
+          res.end('OK');
+          return;
+        }
+
+        res.writeHead(401);
+        res.end('');
+      });
+      break;
+
+    case req.method === 'POST' && req.url.startsWith('/deploy/') && req.headers['content-type'] === formHeader:
+      readBody(req, (body) => {
+        const project = projects.projects.find(p => p.service === body.service);
+
+        if (body.token !== httpSecret) {
+          res.writeHead(401);
+          res.end('');
+          return;
+        }
+
+        if (project) {
+          deploy(project);
+          res.end('OK');
+          return;
+        }
+
+        res.writeHead(404);
+        res.end('');
+      });
+      break;
+
+    default:
+      res.writeHead(404);
+      res.end();
+  }
+})
+
+server.listen(process.env.PORT || 9999);

@@ -1,9 +1,0 @@
-{
-  "registry": "d.homebots.io",
-  "projects": [
-    {
-      "tag": "homebots-node",
-      "projectRoot": "images/node"
-    }
-  ]
-}

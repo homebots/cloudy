@@ -1,5 +1,6 @@
 FROM nginx:alpine
 WORKDIR /home/alfred
+ARG CACHEBUST=1
 RUN apk add unzip wget \
   && wget --no-verbose -q -O alfred.zip https://github.com/homebots/alfred/archive/master.zip \
   && unzip -qq alfred.zip \

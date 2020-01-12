@@ -1,0 +1,17 @@
+{
+  "registry": "d.homebots.io/v2",
+  "projects": [
+    {
+      "tag": "homebots-node",
+      "projectRoot": "images/node"
+    },
+    {
+      "tag": "homebots-alfred",
+      "projectRoot": "images/node",
+      "buildArgs": ["CACHEBUST=$(date +%s)"],
+      "service": "alfred",
+      "expose": ["2000:80"],
+      "vars": ["SSL=1"]
+    }
+  ]
+}

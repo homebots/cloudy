@@ -1,5 +1,5 @@
 FROM homebots-node
-
+ARG CACHEBUST=1
 RUN cd /home \
   && git clone https://github.com/homebots/jsonstore.git storage \
   && cd storage \
