@@ -2,22 +2,22 @@ const http = require('http');
 const { parse } = require('querystring');
 const configuration = require('./projects.json');
 const _sh = require('child_process').spawnSync;
-const sh = (command, args) => _sh(command, args, { stdio: 'pipe' }).stdout.toString('utf8');
+const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
-const registry = configuration.registry;
 const formHeader = 'application/x-www-form-urlencoded';
-const httpSecret = sh('cat', ['.key']).trim();
-
+const httpSecret = () => sh('cat', ['.key']).trim();
 const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
+
+const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
 const log = (...args) => console.log(new Date().toISOString(), ...args);
-const image = (p) => `${registry}/${p.name}:latest`;
+const image = (p) => `${configuration.registry}/${p.name}:latest`;
 const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
 const publish = (p) => run('docker', ['push', image(p)]);
 const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
 
 const run = (command, args) => {
   log(command, ...args);
-  log('>>', sh(command, args));
+  log(prefix(sh(command, args)));
 };
 
 const deploy = (p) => {
@@ -48,7 +48,7 @@ function readBody(req, callback) {
 const server = http.createServer((req, res) => {
   switch (true) {
     case req.method === 'POST' && req.url === '/reload':
-      log('reloading');
+      log('reloading cloud');
       run('git', ['pull', '--rebase']);
       rebuild();
       res.end('');
@@ -57,23 +57,23 @@ const server = http.createServer((req, res) => {
 
     case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
       readBody(req, (body) => {
-        if (body.token === httpSecret) {
-          rebuild();
-          res.end('OK');
+        if (body.token !== httpSecret()) {
+          res.writeHead(401);
+          res.end('');
           return;
         }
 
-        res.writeHead(401);
-        res.end('');
+        rebuild();
+        res.end('OK');
       });
       break;
 
-    case req.method === 'POST' && req.url.startsWith('/deploy/') : //&& req.headers['content-type'] === formHeader:
+    case req.method === 'POST' && req.url.startsWith('/deploy/') && req.headers['content-type'] === formHeader:
       readBody(req, (body) => {
         const service = req.url.split('/deploy/')[1];
         const project = configuration.projects.find(p => p.service === service);
 
-        if (body.token !== httpSecret) {
+        if (body.token !== httpSecret()) {
           res.writeHead(401);
           res.end('');
           return;
