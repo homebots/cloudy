@@ -1,4 +1,4 @@
-FROM homebots-node
+FROM d.homebots.io/v2/homebots-node
 ARG CACHEBUST=1
 RUN cd /home \
   && git clone https://github.com/homebots/jsonstore.git storage \
