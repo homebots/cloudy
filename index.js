@@ -11,7 +11,7 @@ const httpSecret = sh('cat', ['.key']).trim();
 const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 const log = (...args) => console.log(new Date().toISOString(), ...args);
 const image = (p) => `${registry}/${p.name}:latest`;
-const buildArgs = (p) => [...buildArgsBase, ...p.buildArgs].map(arg => `--build-arg ${arg}`);
+const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
 const publish = (p) => run('docker', ['push', image(p)]);
 const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
 
