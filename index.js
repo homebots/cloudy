@@ -5,7 +5,7 @@ const _sh = require('child_process').spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
 const formHeader = 'application/x-www-form-urlencoded';
-const httpSecret = () => sh('cat', ['.key']).trim();
+const httpSecret = require('fs').readFileSync('./.key').toString('utf8');
 const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 
 const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
@@ -57,7 +57,7 @@ const server = http.createServer((req, res) => {
 
     case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
       readBody(req, (body) => {
-        if (body.token !== httpSecret()) {
+        if (body.token !== httpSecret) {
           res.writeHead(401);
           res.end('');
           return;
@@ -73,7 +73,7 @@ const server = http.createServer((req, res) => {
         const service = req.url.split('/deploy/')[1];
         const project = configuration.projects.find(p => p.service === service);
 
-        if (body.token !== httpSecret()) {
+        if (body.token !== httpSecret) {
           res.writeHead(401);
           res.end('');
           return;
