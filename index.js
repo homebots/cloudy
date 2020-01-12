@@ -40,6 +40,8 @@ function readBody(req, callback) {
 const server = http.createServer((req, res) => {
   switch (true) {
     case req.method === 'POST' && req.url === '/reload':
+      run('git', ['pull', '--rebase']);
+      res.end('');
       server.close();
       break;
 

@@ -5,20 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title></title>
-  <style>
-  .right { text-align: right; }
-  .machine { padding: 1rem; }
-  .flex { display: flex; }
-  .flex-grow { flex-grow: 2; }
-  </style>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
 </head>
 <body>
-  <div class="right"><button click="redeployAll()">all</button></div>
-  <div class="machines">
-    <div class="machine flex" data-name="_name">
-      <div class="status">_status</div>
-      <div class="grow">_name</div>
-      <div><button click="deploy(arguments[0])">deploy</button></div>
+  <div class="container">
+    <div class="text-right mb-4"><button click="redeployAll()" class="btn btn-primary">reload all</button></div>
+    <div class="machines">
+      <div class="d-flex" data-name="_name">
+        <div class="badge badge-success">_status</div>
+        <div class="flex-grow-1">_name</div>
+        <div><button click="deploy(arguments[0])" type="button" class="btn btn-primary btn-sm">reload</button></div>
+      </div>
     </div>
   </div>
 
@@ -31,7 +28,7 @@
       const chunks = [];
 
       output.forEach(service => {
-        chunks.push(template.replace('%status%', '*').replace('%name%', service));
+        chunks.push(template.replace('_status', '*').replace(/_name/g, service));
       });
 
       machines.innerHTML = chunks.join('');
