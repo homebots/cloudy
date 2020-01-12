@@ -5,7 +5,7 @@ const _sh = require('child_process').spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
 const formHeader = 'application/x-www-form-urlencoded';
-const httpSecret = require('fs').readFileSync('./.key').toString('utf8');
+const httpSecret = require('fs').readFileSync('./.key').toString('utf8').trim();
 const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 
 const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
@@ -48,7 +48,7 @@ function readBody(req, callback) {
 const server = http.createServer((req, res) => {
   switch (true) {
     case req.method === 'POST' && req.url === '/reload':
-      log('reloading cloud');
+      log('updating cloud');
       run('git', ['pull', '--rebase']);
       rebuild();
       res.end('');
@@ -58,11 +58,13 @@ const server = http.createServer((req, res) => {
     case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
       readBody(req, (body) => {
         if (body.token !== httpSecret) {
+          log(`invalid deploy token`, body.token);
           res.writeHead(401);
           res.end('');
           return;
         }
 
+        log('reloading cloud');
         rebuild();
         res.end('OK');
       });
@@ -74,6 +76,7 @@ const server = http.createServer((req, res) => {
         const project = configuration.projects.find(p => p.service === service);
 
         if (body.token !== httpSecret) {
+          log(`invalid deploy token for ${service}`);
           res.writeHead(401);
           res.end('');
           return;
@@ -86,6 +89,7 @@ const server = http.createServer((req, res) => {
           return;
         }
 
+        log(`service ${service} not found`);
         res.writeHead(404);
         res.end('');
       });
