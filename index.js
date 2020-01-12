@@ -1,18 +1,24 @@
 const http = require('http');
 const { parse } = require('querystring');
 const configuration = require('./projects.json');
-const sh = require('child_process').spawnSync;
+const _sh = require('child_process').spawnSync;
+const sh = (...args) => _sh(...args, { stdio: false }).stdout.toString('utf8');
 
 const registry = configuration.registry;
 const formHeader = 'application/x-www-form-urlencoded';
-const httpSecret = sh('cat', ['.key']);
+const httpSecret = sh('cat', ['.key']).trim();
 
 const log = (...args) => console.log(new Date().toISOString(), ...args);
 const image = (p) => `${registry}/${p.tag}`;
 const buildArgs = (p) => p.buildArgs ? p.buildArgs.map(s => `--build-arg ${s}`) : [];
-const run = (command, args) => log(command, ...args) || sh(command, args, { stdio: 'inherit' }).toString('utf8');
 const publish = (p) => run('docker', ['push', image(p)]);
 const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
+
+const run = (command, args) => {
+  log(command, ...args);
+  log('>>>', sh(command, args));
+};
+
 const deploy = (p) => {
   if (!p.service) return;
 
