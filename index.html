@@ -22,9 +22,14 @@
 </head>
 <body>
   <div class="container">
-    <div class="text-right mb-4">
-      <button onclick="update()" class="btn btn-outline-info if-key">update</button>
-      <button onclick="redeployAll()" class="btn btn-primary if-key">reload all</button>
+    <div class="p-3 d-flex">
+      <div class="flex-grow-1">
+        <h1>Status</h1>
+      </div>
+      <div>
+        <button onclick="update()" class="btn btn-outline-info if-key">update</button>
+        <button onclick="redeployAll()" class="btn btn-primary if-key">reload all</button>
+      </div>
     </div>
     <div class="machines">
       <div class="d-flex machine" data-name="_name">
