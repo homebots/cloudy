@@ -17,6 +17,13 @@
       "service": "hub",
       "expose": ["2999:2999", "3000:3000"],
       "vars": ["SSL=1", "HTTP_PORT=2999", "SOCKET_PORT=3000", "DEBUG=1"]
+    },
+    {
+      "name": "homebots-mdaas",
+      "projectRoot": "images/mdaas",
+      "service": "mdaas",
+      "expose": ["8888:80"],
+      "vars": ["PORT=8888"]
     }
   ]
 }
