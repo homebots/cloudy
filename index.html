@@ -45,9 +45,12 @@
   </div>
 
   <script>
-    const formHeader = { 'content-type': 'application/x-www-form-urlencoded' };
     const authToken = localStorage.getItem('key');
     const baseUrl = 'https://cloud.homebots.io';
+    const formHeader = {
+      'content-type': 'application/x-www-form-urlencoded',
+      'x-hub-signature': authToken,
+    };
 
     Promise.all([
       fetch(`${baseUrl}/discover`).then(r => r.json()),
@@ -70,8 +73,8 @@
       machines.innerHTML = chunks.join('');
     });
 
-    function postAndReload(url) {
-      fetch(url, { method: 'POST', headers: formHeader, body: 'token=' + authToken }).then(() => window.location.reload());
+    function postAndReload(url, body = '') {
+      fetch(url, { method: 'POST', headers: formHeader, body: body }).then(() => window.location.reload());
     }
 
     function deploy(name) {
