@@ -4,7 +4,6 @@ const configuration = require('./projects.json');
 const _sh = require('child_process').spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
-const formHeader = 'application/x-www-form-urlencoded';
 const httpSecret = require('fs').readFileSync('./.key').toString('utf8').trim();
 const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 
@@ -68,14 +67,18 @@ const server = http.createServer((req, res) => {
       res.end('OK');
       break;
 
-    case isAuthorised(req) && req.url.startsWith('/deploy/'):
-      const service = req.url.split('/deploy/')[1];
+    case isAuthorised(req) && /^\/(build|deploy)/.test(req.url):
+      const [, action, service] = req.url.match(/^\/(build|deploy)\/(.+)/);
       const project = findProject(service);
 
       if (project) {
         log(`reloading ${project.service}`);
         run('git', ['pull', '--rebase']);
-        buildProject(project);
+
+        if (action === 'build') {
+          buildProject(project);
+        }
+
         deployProject(project);
         res.end('OK');
         return;

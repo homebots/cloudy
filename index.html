@@ -38,6 +38,7 @@
         </div>
         <div class="flex-grow-1">_name</div>
         <div>
+          <button onclick="rebuild('_name')" type="button" class="btn btn-primary btn-sm if-key">rebuild</button>
           <button onclick="deploy('_name')" type="button" class="btn btn-primary btn-sm if-key">reload</button>
         </div>
       </div>
@@ -46,15 +47,14 @@
 
   <script>
     const authToken = localStorage.getItem('key');
-    const baseUrl = 'https://cloud.homebots.io';
     const formHeader = {
       'content-type': 'application/x-www-form-urlencoded',
       'x-hub-signature': authToken,
     };
 
     Promise.all([
-      fetch(`${baseUrl}/discover`).then(r => r.json()),
-      fetch(`${baseUrl}/status`).then(r => r.json()),
+      fetch(`/discover`).then(r => r.json()),
+      fetch(`/status`).then(r => r.json()),
     ]).then(([images, status]) => {
       const machines = document.querySelector('.machines');
       const template = machines.innerHTML;
@@ -78,15 +78,19 @@
     }
 
     function deploy(name) {
-      postAndReload(`${baseUrl}/deploy/${name}`);
+      postAndReload(`/deploy/${name}`);
+    }
+
+    function rebuild(name) {
+      postAndReload(`/build/${name}`);
     }
 
     function redeployAll() {
-      postAndReload(`${baseUrl}/deploy`);
+      postAndReload(`/deploy`);
     }
 
     function update() {
-      postAndReload(`${baseUrl}/update`);
+      postAndReload(`/update`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
