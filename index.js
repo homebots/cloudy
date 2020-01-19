@@ -15,6 +15,8 @@ const publish = (p) => run('docker', ['push', image(p)]);
 const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
 const json = (x) => JSON.stringify(x, null, 2);
 
+let isRebuilding = false;
+
 const run = (command, args) => {
   log(command, args);
   log(prefix(sh(command, args)));
@@ -45,71 +47,99 @@ function readBody(req, callback) {
   req.on('end', () => callback(parse(body)));
 }
 
-const server = http.createServer((req, res) => {
-  const requestSecret = req.headers['x-hub-signature'];
-  const isAuthorised = (req) => req.method === 'POST' && requestSecret === httpSecret;
+function updateDockerImages(req, res) {
+  log('updating cloud images');
+  run('git', ['pull', '--rebase']);
+  res.writeHead(200).end();
 
-  log('>>', req.method, req.url);
+  setTimeout(() => {
+    if (isRebuilding) return;
+
+    isRebuilding = true;
+    configuration.projects.forEach(buildProject);
+    process.exit(0);
+  });
+}
+
+function redeployAllImages(req, res) {
+  log('reloading cloud');
+  configuration.projects.forEach(deployProject);
+  res.writeHead(201).end();
+}
+
+function redeploySpecificImage(req, res) {
+  const [, action, service] = req.url.match(/^\/(build|deploy)\/(.+)/);
+  const project = findProject(service);
+
+  if (project) {
+    log(`reloading ${project.service}`);
+    run('git', ['pull', '--rebase']);
+
+    if (action === 'build') {
+      buildProject(project);
+    }
+
+    deployProject(project);
+    res.writeHead(201).end();
+    return;
+  }
+
+  log(`service ${service} not found`);
+  res.writeHead(404).end();
+}
+
+function listServices(req, res) {
+  log(`discovered by ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
+  res.end(json(configuration.projects.map(p => p.service).filter(Boolean)));
+}
+
+function listImages(req, res) {
+  const services = sh('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').map(name => ({ name }));
+  res.end(json(services));
+}
+
+const server = http.createServer((req, res) => {
+  if (isRebuilding) {
+    res.writeHead(503).end();
+  }
+
+  const requestSecret = req.headers['x-hub-signature'];
+  const isPost = req.method === 'POST';
+  const isGet = req.method === 'GET';
+
+  log('>>', req.method, req.url, req.url.headers);
+
+  if (requestSecret !== httpSecret) {
+    res.writeHead(401, 'Unauthorized').end();
+    return;
+  }
 
   switch (true) {
-    case isAuthorised(req) && req.url === '/update':
-      log('updating cloud');
-      run('git', ['pull', '--rebase']);
-      res.writeHead(200);
-      res.end('');
-
-      setTimeout(() => {
-        configuration.projects.forEach(buildProject);
-        process.exit(0);
-      });
+    case isPost && req.url === '/update':
+      updateDockerImages(req, res)
       break;
 
-    case isAuthorised(req) && req.url === '/deploy':
-      log('reloading cloud');
-      configuration.projects.forEach(deployProject);
-      res.end('OK');
+    case isPost && req.url === '/deploy':
+      redeployAllImages(req, res);
       break;
 
-    case isAuthorised(req) && /^\/(build|deploy)/.test(req.url):
-      const [, action, service] = req.url.match(/^\/(build|deploy)\/(.+)/);
-      const project = findProject(service);
-
-      if (project) {
-        log(`reloading ${project.service}`);
-        run('git', ['pull', '--rebase']);
-
-        if (action === 'build') {
-          buildProject(project);
-        }
-
-        deployProject(project);
-        res.end('OK');
-        return;
-      }
-
-      log(`service ${service} not found`);
-      res.writeHead(404);
-      res.end('');
+    case isPost && /^\/(build|deploy)/.test(req.url):
+      redeploySpecificImage(req, res);
       break;
 
-    case req.method === 'GET' && req.url === '/discover':
-      log(`discovered by ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
-      res.end(json(configuration.projects.map(p => p.service).filter(Boolean)));
+    case isGet && req.url === '/discover':
+      listServices(req, res);
       break;
 
-    case req.method === 'GET' && req.url === '/status':
-      const services = sh('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').map(name => ({ name }));
-      res.end(json(services));
+    case isGet && req.url === '/status':
+      listImages(req, res);
       break;
 
-    case req.method === 'GET' && req.url === '/':
+    case isGet && req.url === '/':
       require('fs').createReadStream(__dirname + '/index.html').pipe(res);
       break;
 
     default:
-      res.writeHead(404);
-      res.end();
+      res.writeHead(404).end();
   }
-})
-
-server.listen(process.env.PORT || 9999);
+}).listen(process.env.PORT || 9999);
