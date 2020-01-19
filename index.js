@@ -1,4 +1,5 @@
 const http = require('http');
+const crypto = require('crypto');
 const { parse } = require('querystring');
 const configuration = require('./projects.json');
 const _sh = require('child_process').spawnSync;
@@ -44,7 +45,7 @@ function buildProject(project) {
 function readBody(req, callback) {
   let body = '';
   req.on('data', chunk => body += chunk.toString());
-  req.on('end', () => callback(parse(body)));
+  req.on('end', () => callback(body));
 }
 
 function updateDockerImages(req, res) {
@@ -102,51 +103,55 @@ function listImages(req, res) {
   res.end(json(services));
 }
 
-const server = http.createServer((req, res) => {
+http.createServer((req, res) => {
   if (isRebuilding) {
     res.writeHead(503);
     res.end();
   }
 
-  const requestSecret = req.headers['x-hub-signature'];
+  const requestSignature = req.headers['x-hub-signature'];
   const isPost = req.method === 'POST';
   const isGet = req.method === 'GET';
 
-  log('>>', req.method, req.url, req.url.headers);
+  readBody(req, function(body) {
+    log('>>', req.method, req.url, req.headers);
+    const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(body).digest('hex');
+    log(payloadSignature, requestSignature);
 
-  if (isPost && requestSecret !== httpSecret) {
-    res.writeHead(401, 'Unauthorized');
-    res.end();
-    return;
-  }
-
-  switch (true) {
-    case isPost && req.url === '/update':
-      updateDockerImages(req, res)
-      break;
-
-    case isPost && req.url === '/deploy':
-      redeployAllImages(req, res);
-      break;
-
-    case isPost && /^\/(build|deploy)/.test(req.url):
-      redeploySpecificImage(req, res);
-      break;
-
-    case isGet && req.url === '/discover':
-      listServices(req, res);
-      break;
-
-    case isGet && req.url === '/status':
-      listImages(req, res);
-      break;
-
-    case isGet && req.url === '/':
-      require('fs').createReadStream(__dirname + '/index.html').pipe(res);
-      break;
-
-    default:
-      res.writeHead(404);
+    if (isPost && requestSignature !== httpSecret) {
+      res.writeHead(401, 'Unauthorized');
       res.end();
-  }
+      return;
+    }
+
+    switch (true) {
+      case isPost && req.url === '/update':
+        updateDockerImages(req, res)
+        break;
+
+      case isPost && req.url === '/deploy':
+        redeployAllImages(req, res);
+        break;
+
+      case isPost && /^\/(build|deploy)/.test(req.url):
+        redeploySpecificImage(req, res);
+        break;
+
+      case isGet && req.url === '/discover':
+        listServices(req, res);
+        break;
+
+      case isGet && req.url === '/status':
+        listImages(req, res);
+        break;
+
+      case isGet && req.url === '/':
+        require('fs').createReadStream(__dirname + '/index.html').pipe(res);
+        break;
+
+      default:
+        res.writeHead(404);
+        res.end();
+    }
+  });
 }).listen(process.env.PORT || 9999);
