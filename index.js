@@ -49,10 +49,13 @@ const server = http.createServer((req, res) => {
   const requestSecret = req.headers['x-hub-signature'];
   const isAuthorised = (req) => req.method === 'POST' && requestSecret === httpSecret;
 
+  log('>>', req.method, req.url);
+
   switch (true) {
     case isAuthorised(req) && req.url === '/update':
       log('updating cloud');
       run('git', ['pull', '--rebase']);
+      res.writeHead(200);
       res.end('');
 
       setTimeout(() => {
