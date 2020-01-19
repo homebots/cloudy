@@ -31,13 +31,15 @@ const deploy = (p) => {
   run('docker', ['run', '--rm', '-d', '--name', p.service, ...ports, ...envVars, image(p)]);
 }
 
-function rebuild() {
+function rebuild(projectName) {
   run('git', ['pull', '--rebase']);
-  configuration.projects.forEach(project => {
-    build(project);
-    publish(project);
-    deploy(project);
-  });
+  configuration.projects.forEach(buildProject);
+}
+
+function buildProject(project) {
+  build(project);
+  publish(project);
+  deploy(project);
 }
 
 function readBody(req, callback) {
@@ -87,7 +89,8 @@ const server = http.createServer((req, res) => {
 
         if (project) {
           log(`reloading ${project.service}`);
-          deploy(project);
+          run('git', ['pull', '--rebase']);
+          buildProject(project);
           res.end('OK');
           return;
         }
