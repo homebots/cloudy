@@ -51,9 +51,11 @@ const server = http.createServer((req, res) => {
     case req.method === 'POST' && req.url === '/reload':
       log('updating cloud');
       run('git', ['pull', '--rebase']);
-      rebuild();
       res.end('');
-      process.exit(0);
+      setTimeout(() => {
+        rebuild();
+        process.exit(0);
+      });
       break;
 
     case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
