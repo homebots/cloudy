@@ -50,7 +50,8 @@ function readBody(req, callback) {
 function updateDockerImages(req, res) {
   log('updating cloud images');
   run('git', ['pull', '--rebase']);
-  res.writeHead(200).end();
+  res.writeHead(200);
+  res.end();
 
   setTimeout(() => {
     if (isRebuilding) return;
@@ -64,7 +65,8 @@ function updateDockerImages(req, res) {
 function redeployAllImages(req, res) {
   log('reloading cloud');
   configuration.projects.forEach(deployProject);
-  res.writeHead(201).end();
+  res.writeHead(201);
+  res.end();
 }
 
 function redeploySpecificImage(req, res) {
@@ -80,12 +82,14 @@ function redeploySpecificImage(req, res) {
     }
 
     deployProject(project);
-    res.writeHead(201).end();
+    res.writeHead(201);
+    res.end();
     return;
   }
 
   log(`service ${service} not found`);
-  res.writeHead(404).end();
+  res.writeHead(404);
+  res.end();
 }
 
 function listServices(req, res) {
@@ -100,7 +104,8 @@ function listImages(req, res) {
 
 const server = http.createServer((req, res) => {
   if (isRebuilding) {
-    res.writeHead(503).end();
+    res.writeHead(503);
+    res.end();
   }
 
   const requestSecret = req.headers['x-hub-signature'];
@@ -109,8 +114,9 @@ const server = http.createServer((req, res) => {
 
   log('>>', req.method, req.url, req.url.headers);
 
-  if (requestSecret !== httpSecret) {
-    res.writeHead(401, 'Unauthorized').end();
+  if (isPost && requestSecret !== httpSecret) {
+    res.writeHead(401, 'Unauthorized');
+    res.end();
     return;
   }
 
@@ -140,6 +146,7 @@ const server = http.createServer((req, res) => {
       break;
 
     default:
-      res.writeHead(404).end();
+      res.writeHead(404);
+      res.end();
   }
 }).listen(process.env.PORT || 9999);
