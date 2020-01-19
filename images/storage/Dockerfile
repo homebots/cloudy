@@ -6,5 +6,6 @@ RUN cd /home \
   && npm ci
 
 WORKDIR /home/storage
+EXPOSE 3000
 
 CMD [ "./node_modules/.bin/ts-node", "/home/storage/server.ts" ]

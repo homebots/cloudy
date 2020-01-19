@@ -49,8 +49,11 @@ function readBody(req, callback) {
 }
 
 const server = http.createServer((req, res) => {
+  const requestSecret = req.headers['x-hub-signature'];
+  const isAuthorised = (req) => req.method === 'POST' && requestSecret === httpSecret;
+
   switch (true) {
-    case req.method === 'POST' && req.url === '/reload':
+    case isAuthorised(req) && req.url === '/reload':
       log('updating cloud');
       run('git', ['pull', '--rebase']);
       res.end('');
@@ -60,45 +63,27 @@ const server = http.createServer((req, res) => {
       });
       break;
 
-    case req.method === 'POST' && req.url === '/deploy' && req.headers['content-type'] === formHeader:
-      readBody(req, (body) => {
-        if (body.token !== httpSecret) {
-          log(`invalid deploy token`, body.token);
-          res.writeHead(401);
-          res.end('');
-          return;
-        }
-
-        log('reloading cloud');
-        rebuild();
-        res.end('OK');
-      });
+    case isAuthorised(req) && req.url === '/deploy':
+      log('reloading cloud');
+      rebuild();
+      res.end('OK');
       break;
 
-    case req.method === 'POST' && req.url.startsWith('/deploy/') && req.headers['content-type'] === formHeader:
-      readBody(req, (body) => {
-        const service = req.url.split('/deploy/')[1];
-        const project = configuration.projects.find(p => p.service === service);
+    case isAuthorised(req) && req.url.startsWith('/deploy/'):
+      const service = req.url.split('/deploy/')[1];
+      const project = configuration.projects.find(p => p.service === service);
 
-        if (body.token !== httpSecret) {
-          log(`invalid deploy token for ${service}`);
-          res.writeHead(401);
-          res.end('');
-          return;
-        }
+      if (project) {
+        log(`reloading ${project.service}`);
+        run('git', ['pull', '--rebase']);
+        res.end('OK');
+        setTimeout(() => buildProject(project));
+        return;
+      }
 
-        if (project) {
-          log(`reloading ${project.service}`);
-          run('git', ['pull', '--rebase']);
-          buildProject(project);
-          res.end('OK');
-          return;
-        }
-
-        log(`service ${service} not found`);
-        res.writeHead(404);
-        res.end('');
-      });
+      log(`service ${service} not found`);
+      res.writeHead(404);
+      res.end('');
       break;
 
     case req.method === 'GET' && req.url === '/discover':
