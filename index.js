@@ -21,25 +21,23 @@ const run = (command, args) => {
   log(prefix(sh(command, args)));
 };
 
-const deploy = (p) => {
-  if (!p.service) return;
-
-  const ports = p.expose ? p.expose.map(ports => `-p${ports}`) : [];
-  const envVars = p.vars ? p.vars.map(env => ['-e', env]).reduce((a, b) => a.concat(b)) : [];
-
-  run('docker', ['stop', p.service]);
-  run('docker', ['run', '--rm', '-d', '--name', p.service, ...ports, ...envVars, image(p)]);
+function findProject(name) {
+  return configuration.projects.find(p => p.service === name);
 }
 
-function rebuild(projectName) {
-  run('git', ['pull', '--rebase']);
-  configuration.projects.forEach(buildProject);
+function deployProject(project) {
+  if (!project.service) return;
+
+  const ports = project.expose ? project.expose.map(ports => `-p${ports}`) : [];
+  const envVars = project.vars ? project.vars.map(env => ['-e', env]).reduce((a, b) => a.concat(b)) : [];
+
+  run('docker', ['stop', project.service]);
+  run('docker', ['run', '--rm', '-d', '--name', project.service, ...ports, ...envVars, image(project)]);
 }
 
 function buildProject(project) {
   build(project);
   publish(project);
-  deploy(project);
 }
 
 function readBody(req, callback) {
@@ -53,31 +51,33 @@ const server = http.createServer((req, res) => {
   const isAuthorised = (req) => req.method === 'POST' && requestSecret === httpSecret;
 
   switch (true) {
-    case isAuthorised(req) && req.url === '/reload':
+    case isAuthorised(req) && req.url === '/update':
       log('updating cloud');
       run('git', ['pull', '--rebase']);
       res.end('');
+
       setTimeout(() => {
-        rebuild();
+        configuration.projects.forEach(buildProject);
         process.exit(0);
       });
       break;
 
     case isAuthorised(req) && req.url === '/deploy':
       log('reloading cloud');
-      rebuild();
+      configuration.projects.forEach(deployProject);
       res.end('OK');
       break;
 
     case isAuthorised(req) && req.url.startsWith('/deploy/'):
       const service = req.url.split('/deploy/')[1];
-      const project = configuration.projects.find(p => p.service === service);
+      const project = findProject(service);
 
       if (project) {
         log(`reloading ${project.service}`);
         run('git', ['pull', '--rebase']);
+        buildProject(project);
+        deployProject(project);
         res.end('OK');
-        setTimeout(() => buildProject(project));
         return;
       }
 
