@@ -2,28 +2,63 @@
   "registry": "d.homebots.io/v2",
   "projects": [
     {
-      "name": "homebots-node",
+      "image": "homebots-node",
       "projectRoot": "images/node"
     },
     {
-      "name": "homebots-alfred",
-      "projectRoot": "images/alfred",
+      "image": "homebots-node-app",
+      "projectRoot": "images/node-app"
+    },
+    {
+      "image": "homebots-alfred",
       "service": "alfred",
-      "expose": ["2000:80"]
+      "projectRoot": "images/alfred",
+      "serviceConfig": "./nginx/alfred.conf",
+      "ports": [
+        "2000:80"
+      ]
     },
     {
-      "name": "homebots-relay",
-      "projectRoot": "images/relay",
+      "from": "d.homebots.io/v2/homebots-node-app",
       "service": "hub",
-      "expose": ["2999:2999", "3000:3000"],
-      "vars": ["SSL=1", "HTTP_PORT=2999", "SOCKET_PORT=3000", "DEBUG=1"]
+      "serviceConfig": "./nginx/hub.conf",
+      "ports": [
+        "2999:2999",
+        "3000:3000"
+      ],
+      "env": {
+        "GIT_URL": "https://github.com/homebots/relay.git",
+        "SSL": "1",
+        "HTTP_PORT": "2999",
+        "SOCKET_PORT": "3000",
+        "DEBUG": "1"
+      }
     },
     {
-      "name": "homebots-mdaas",
-      "projectRoot": "images/mdaas",
       "service": "mdaas",
-      "expose": ["8888:80"],
-      "vars": ["PORT=8888"]
+      "from": "d.homebots.io/v2/homebots-node-app",
+      "serviceConfig": "./nginx/service.conf",
+      "randomPort": true,
+      "ports": [
+        "_randomPort_:_randomPort_"
+      ],
+      "env": {
+        "PORT": "_randomPort_",
+        "GIT_URL": "https://github.com/homebots/mdaas.git"
+      }
+    },
+    {
+      "service": "json",
+      "from": "d.homebots.io/v2/homebots-node-app",
+      "serviceConfig": "./nginx/service.conf",
+      "randomPort": true,
+      "ports": [
+        "_randomPort_:_randomPort_"
+      ],
+      "env": {
+        "PORT": "_randomPort_",
+        "GIT_URL": "https://github.com/homebots/jsonstore.git"
+      }
     }
   ]
 }

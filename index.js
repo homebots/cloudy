@@ -1,20 +1,23 @@
 const http = require('http');
-const crypto = require('crypto');
-const { parse } = require('querystring');
+const FS = require('fs');
 const configuration = require('./projects.json');
-const _sh = require('child_process').spawnSync;
+const ChildProcess = require('child_process');
+const { time } = require('console');
+const _sh = ChildProcess.spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
-const httpSecret = require('fs').readFileSync('./.key').toString('utf8').trim();
-const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
-
+const readFile = (file) => FS.readFileSync(file).toString('utf8').trim();
 const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
 const log = (...args) => console.log(new Date().toISOString(), ...args);
-const image = (p) => `${configuration.registry}/${p.name}:latest`;
+const dockerImage = (p) => p.from || `${configuration.registry}/${p.image}:latest`;
 const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
-const publish = (p) => run('docker', ['push', image(p)]);
-const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', image(p), `${p.projectRoot}`]);
+const publish = (p) => run('docker', ['push', dockerImage(p)]);
+const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', dockerImage(p), `${p.projectRoot}`]);
 const json = (x) => JSON.stringify(x, null, 2);
+const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
+
+const httpSecret = readFile('./.key');
+const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 
 let isRebuilding = false;
 
@@ -28,18 +31,25 @@ function findProject(name) {
 }
 
 function deployProject(project) {
-  if (!project.service) return;
+  if (project.service) {
+    run('docker', ['stop', project.service]);
+    run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, dockerImage(project)]);
+  }
 
-  const ports = project.expose ? project.expose.map(ports => `-p${ports}`) : [];
-  const envVars = project.vars ? project.vars.map(env => ['-e', env]).reduce((a, b) => a.concat(b)) : [];
-
-  run('docker', ['stop', project.service]);
-  run('docker', ['run', '--rm', '-d', '--name', project.service, ...ports, ...envVars, image(project)]);
+  if (project.serviceConfig) {
+    reloadNginx();
+  }
 }
 
 function buildProject(project) {
-  build(project);
-  publish(project);
+  if (project.image) {
+    build(project);
+    publish(project);
+  }
+
+  if (project.serviceConfig) {
+    addNginxConfig(project);
+  }
 }
 
 function readBody(req, callback) {
@@ -75,14 +85,16 @@ function redeploySpecificImage(req, res) {
   const project = findProject(service);
 
   if (project) {
-    log(`reloading ${project.service}`);
     run('git', ['pull', '--rebase']);
 
     if (action === 'build') {
+      log(`build ${project.service}`);
       buildProject(project);
+    } else {
+      log(`deploy ${project.service}`);
+      deployProject(project);
     }
 
-    deployProject(project);
     res.writeHead(201);
     res.end();
     return;
@@ -103,6 +115,65 @@ function listImages(req, res) {
   res.end(json(services));
 }
 
+function getRandomPort() {
+  return 3000 + ~~(Math.random() * 3000);
+}
+
+function addNginxConfig(project) {
+  const vars = {
+    ...project.env,
+    randomPort: project.port
+  };
+
+  const sourceFile = project.serviceConfig;
+  const source = FS.readFileSync(sourceFile).toString('utf-8');
+  const content = replaceVars(source, vars);
+
+  try {
+    FS.writeFileSync(`/etc/nginx/cloudy/${project.service}.conf`, content);
+  } catch (error) {
+    log('Failed to create Nginx configuration!');
+    log(error);
+  }
+}
+
+function reloadNginx() {
+  log('Reloading Nginx');
+
+  try {
+    ChildProcess.execSync('nginx -t && service nginx reload');
+  } catch (error) {
+    log('Nginx failed to reload');
+    log(error);
+  }
+}
+
+function replaceInlinePort(text, port) {
+  return text.replace(/_randomPort_/g, port);
+}
+
+function initializeProject(project) {
+  project.expose = [];
+  project.envVars = [];
+
+  if (project.randomPort) {
+    project.port = getRandomPort();
+  }
+
+  if (project.ports) {
+    project.expose = project.ports.map(port => replaceInlinePort(`-p127.0.0.1:${port}`, project.port));
+  }
+
+  if (project.env) {
+    project.envVars = Object.keys(project.env)
+      .map(key => ['-e', `${key}="${replaceInlinePort(project.env[key], project.port)}"`])
+      .reduce((vars, item) => vars.concat(item), []);
+  }
+}
+
+
+configuration.projects.forEach(p => initializeProject(p));
+
 http.createServer((req, res) => {
   if (isRebuilding) {
     res.writeHead(503);
@@ -113,12 +184,11 @@ http.createServer((req, res) => {
   const isPost = req.method === 'POST';
   const isGet = req.method === 'GET';
 
-  readBody(req, function(body) {
-    log('>>', req.method, req.url, req.headers);
-    const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(body).digest('hex');
-    log(payloadSignature, requestSignature);
-
-    if (isPost && requestSignature !== httpSecret) {
+  readBody(req, function (body) {
+    // log('>>', req.method, req.url, req.headers);
+    // const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(body).digest('hex');
+    // log(payloadSignature, requestSignature);
+    if (isPost && req.headers['x-hub-signature'] !== httpSecret) {
       res.writeHead(401, 'Unauthorized');
       res.end();
       return;
@@ -129,7 +199,7 @@ http.createServer((req, res) => {
         updateDockerImages(req, res)
         break;
 
-      case isPost && req.url === '/deploy':
+      case isPost && req.url === '/rebuild':
         redeployAllImages(req, res);
         break;
 
