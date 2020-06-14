@@ -7,6 +7,8 @@ const Path = require('path');
 const _sh = ChildProcess.spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
+const REBUILD_LOCK = Path.join(__dirname, '.rebuild-lock');
+
 const readFile = (file) => FS.readFileSync(Path.join(__dirname, file)).toString('utf8').trim();
 const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
 const log = (...args) => console.log(new Date().toISOString(), ...args);
@@ -61,24 +63,24 @@ function readBody(req, callback) {
   req.on('end', () => callback(body));
 }
 
-function updateDockerImages() {
-  log('updating cloud images');
-
-  if (isRebuilding) return;
+function updateRepository() {
+  log('updating repository');
 
   try {
     run('git', ['pull', '--rebase']);
   } catch (error) {
     log('failed to fetch', error);
   }
-
-  isRebuilding = true;
-  configuration.projects.forEach(buildProject);
 }
 
 function redeployAllImages() {
   log('reloading cloud');
   configuration.projects.forEach(deployProject);
+}
+
+function rebuildAllProjects() {
+  log('rebuilding everything');
+  configuration.projects.forEach(buildProject);
 }
 
 function redeploySpecificImage(req, res) {
@@ -200,8 +202,8 @@ http.createServer((req, res) => {
         res.writeHead(200);
         res.end('');
 
-        updateDockerImages();
-        redeployAllImages();
+        FS.writeFileSync(REBUILD_LOCK, Date.now());
+        updateRepository();
         process.exit(0);
 
       case isPost && req.url === '/redeployAll':
@@ -232,3 +234,9 @@ http.createServer((req, res) => {
     }
   });
 }).listen(process.env.PORT || 9999);
+
+if (FS.existsSync(REBUILD_LOCK)) {
+  rebuildAllProjects();
+  redeployAllImages();
+  FS.unlinkSync(REBUILD_LOCK);
+}
