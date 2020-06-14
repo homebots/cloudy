@@ -43,7 +43,7 @@
         <button
           onclick="update()"
           class="btn btn-outline-info if-key"
-        >update</button>
+        >rebuild everything</button>
         <button
           onclick="redeployAll()"
           class="btn btn-primary if-key"
@@ -119,7 +119,7 @@
     }
 
     function redeployAll() {
-      postAndReload(`/rebuild`);
+      postAndReload(`/redeployAll`);
     }
 
     function update() {

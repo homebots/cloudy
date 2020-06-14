@@ -201,7 +201,7 @@ http.createServer((req, res) => {
         updateDockerImages(req, res)
         break;
 
-      case isPost && req.url === '/rebuild':
+      case isPost && req.url === '/redeployAll':
         redeployAllImages(req, res);
         break;
 
