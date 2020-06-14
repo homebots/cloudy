@@ -53,9 +53,7 @@ function buildProject(project) {
     publish(project);
   }
 
-  if (project.serviceConfig) {
-    addNginxConfig(project);
-  }
+  updateNginxConfig(project);
 }
 
 function readBody(req, callback) {
@@ -114,7 +112,7 @@ function listServices(req, res) {
   res.end(json(configuration.projects.map(p => p.service).filter(Boolean)));
 }
 
-function listImages(req, res) {
+function listImages(_, res) {
   const services = sh('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').map(name => ({ name }));
   res.end(json(services));
 }
@@ -139,6 +137,12 @@ function addNginxConfig(project) {
   } catch (error) {
     log('Failed to create Nginx configuration!');
     log(error);
+  }
+}
+
+function updateNginxConfig(project) {
+  if (project.serviceConfig) {
+    addNginxConfig(project);
   }
 }
 
@@ -174,6 +178,8 @@ function initializeProject(project) {
       .map(key => ['-e', `${key}="${replaceInlinePort(project.env[key], project.port)}"`])
       .reduce((vars, item) => vars.concat(item), []);
   }
+
+  updateNginxConfig(project);
 }
 
 function checkBuildLock() {
@@ -193,6 +199,7 @@ function checkBuildLock() {
 
 configuration.projects.forEach(p => initializeProject(p));
 checkBuildLock();
+reloadNginx();
 
 http.createServer((req, res) => {
   if (isRebuilding) {
