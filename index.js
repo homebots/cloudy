@@ -3,7 +3,6 @@ const FS = require('fs');
 const crypto = require('crypto');
 const configuration = require('./projects.json');
 const ChildProcess = require('child_process');
-const { time } = require('console');
 const _sh = ChildProcess.spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
@@ -43,7 +42,7 @@ function deployProject(project) {
 }
 
 function buildProject(project) {
-  log('Building', project.service || project.image);
+  log('Building project', project.service || project.image);
 
   if (project.image) {
     build(project);
@@ -52,6 +51,7 @@ function buildProject(project) {
 
   if (project.serviceConfig) {
     addNginxConfig(project);
+
   }
 }
 
@@ -61,27 +61,24 @@ function readBody(req, callback) {
   req.on('end', () => callback(body));
 }
 
-function updateDockerImages(req, res) {
+function updateDockerImages(_, res) {
   log('updating cloud images');
-  res.writeHead(200);
-  res.end();
 
-  run('git', ['pull', '--rebase']);
+  if (isRebuilding) return;
 
-  setTimeout(() => {
-    if (isRebuilding) return;
+  try {
+    run('git', ['pull', '--rebase']);
+  } catch (error) {
+    log('failed to fetch', error);
+  }
 
-    isRebuilding = true;
-    configuration.projects.forEach(buildProject);
-    process.exit(0);
-  });
+  isRebuilding = true;
+  configuration.projects.forEach(buildProject);
 }
 
-function redeployAllImages(req, res) {
+function redeployAllImages() {
   log('reloading cloud');
   configuration.projects.forEach(deployProject);
-  res.writeHead(201);
-  res.end();
 }
 
 function redeploySpecificImage(req, res) {
@@ -200,11 +197,17 @@ http.createServer((req, res) => {
 
     switch (true) {
       case isPost && req.url === '/update':
-        updateDockerImages(req, res)
-        break;
+        res.writeHead(200);
+        res.end('');
+
+        updateDockerImages();
+        redeployAllImages();
+        process.exit(0);
 
       case isPost && req.url === '/redeployAll':
-        redeployAllImages(req, res);
+        redeployAllImages();
+        res.writeHead(201);
+        res.end();
         break;
 
       case isPost && /^\/(build|deploy)/.test(req.url):
