@@ -3,10 +3,11 @@ const FS = require('fs');
 const crypto = require('crypto');
 const configuration = require('./projects.json');
 const ChildProcess = require('child_process');
+const Path = require('path');
 const _sh = ChildProcess.spawnSync;
 const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
 
-const readFile = (file) => FS.readFileSync(file).toString('utf8').trim();
+const readFile = (file) => FS.readFileSync(Path.join(__dirname, file)).toString('utf8').trim();
 const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
 const log = (...args) => console.log(new Date().toISOString(), ...args);
 const dockerImage = (p) => p.from || `${configuration.registry}/${p.image}:latest`;
@@ -16,7 +17,7 @@ const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', dockerImage(
 const json = (x) => JSON.stringify(x, null, 2);
 const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
 
-const httpSecret = readFile('./.key');
+const httpSecret = readFile('.key');
 const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 
 let isRebuilding = false;
@@ -127,7 +128,7 @@ function addNginxConfig(project) {
   };
 
   const sourceFile = project.serviceConfig;
-  const source = FS.readFileSync(sourceFile).toString('utf-8');
+  const source = readFile(sourceFile);
   const content = replaceVars(source, vars);
 
   try {

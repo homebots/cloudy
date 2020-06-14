@@ -13,7 +13,7 @@
       "image": "homebots-alfred",
       "service": "alfred",
       "projectRoot": "images/alfred",
-      "serviceConfig": "./nginx/alfred.conf",
+      "serviceConfig": "nginx/alfred.conf",
       "ports": [
         "2000:80"
       ]
@@ -21,7 +21,7 @@
     {
       "from": "d.homebots.io/v2/homebots-node-app",
       "service": "hub",
-      "serviceConfig": "./nginx/hub.conf",
+      "serviceConfig": "nginx/hub.conf",
       "ports": [
         "2999:2999",
         "3000:3000"
@@ -37,7 +37,7 @@
     {
       "service": "mdaas",
       "from": "d.homebots.io/v2/homebots-node-app",
-      "serviceConfig": "./nginx/service.conf",
+      "serviceConfig": "nginx/service.conf",
       "randomPort": true,
       "ports": [
         "_randomPort_:_randomPort_"
@@ -50,7 +50,7 @@
     {
       "service": "json",
       "from": "d.homebots.io/v2/homebots-node-app",
-      "serviceConfig": "./nginx/service.conf",
+      "serviceConfig": "nginx/service.conf",
       "randomPort": true,
       "ports": [
         "_randomPort_:_randomPort_"
