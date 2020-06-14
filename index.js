@@ -1,5 +1,6 @@
 const http = require('http');
 const FS = require('fs');
+const crypto = require('crypto');
 const configuration = require('./projects.json');
 const ChildProcess = require('child_process');
 const { time } = require('console');
@@ -60,9 +61,10 @@ function readBody(req, callback) {
 
 function updateDockerImages(req, res) {
   log('updating cloud images');
-  run('git', ['pull', '--rebase']);
   res.writeHead(200);
   res.end();
+
+  run('git', ['pull', '--rebase']);
 
   setTimeout(() => {
     if (isRebuilding) return;
@@ -185,10 +187,10 @@ http.createServer((req, res) => {
   const isGet = req.method === 'GET';
 
   readBody(req, function (body) {
-    // log('>>', req.method, req.url, req.headers);
-    // const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(body).digest('hex');
-    // log(payloadSignature, requestSignature);
-    if (isPost && req.headers['x-hub-signature'] !== httpSecret) {
+    const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(body).digest('hex');
+
+    if (isPost && payloadSignature !== requestSignature) {
+      log('Invalid signature!', payloadSignature, requestSignature);
       res.writeHead(401, 'Unauthorized');
       res.end();
       return;
