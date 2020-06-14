@@ -43,6 +43,8 @@ function deployProject(project) {
 }
 
 function buildProject(project) {
+  log('Building', project.service || project.image);
+
   if (project.image) {
     build(project);
     publish(project);
