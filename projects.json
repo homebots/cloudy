@@ -38,12 +38,12 @@
       "service": "mdaas",
       "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
-      "randomPort": true,
+      "port": 2000,
       "ports": [
-        "_randomPort_:_randomPort_"
+        "_port_:_port_"
       ],
       "env": {
-        "PORT": "_randomPort_",
+        "PORT": "_port_",
         "GIT_URL": "https://github.com/homebots/mdaas.git"
       }
     },
@@ -51,12 +51,12 @@
       "service": "json",
       "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
-      "randomPort": true,
+      "port": 2001,
       "ports": [
-        "_randomPort_:_randomPort_"
+        "_port_:_port_"
       ],
       "env": {
-        "PORT": "_randomPort_",
+        "PORT": "_port_",
         "GIT_URL": "https://github.com/homebots/jsonstore.git"
       }
     }

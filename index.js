@@ -39,10 +39,6 @@ function deployProject(project) {
     run('docker', ['stop', project.service]);
     run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, dockerImage(project)]);
   }
-
-  if (project.serviceConfig) {
-    reloadNginx();
-  }
 }
 
 function buildProject(project) {
@@ -117,14 +113,10 @@ function listImages(_, res) {
   res.end(json(services));
 }
 
-function getRandomPort() {
-  return 3000 + ~~(Math.random() * 3000);
-}
-
 function addNginxConfig(project) {
   const vars = {
     ...project.env,
-    randomPort: project.port,
+    port: project.port,
     service: project.service,
   };
 
@@ -158,16 +150,12 @@ function reloadNginx() {
 }
 
 function replaceInlinePort(text, port) {
-  return text.replace(/_randomPort_/g, port);
+  return text.replace(/_port_/g, port);
 }
 
 function initializeProject(project) {
   project.expose = [];
   project.envVars = [];
-
-  if (project.randomPort) {
-    project.port = getRandomPort();
-  }
 
   if (project.ports) {
     project.expose = project.ports.map(port => replaceInlinePort(`-p127.0.0.1:${port}`, project.port));
@@ -199,7 +187,7 @@ function checkBuildLock() {
 
 configuration.projects.forEach(p => initializeProject(p));
 checkBuildLock();
-reloadNginx();
+setTimeout(reloadNginx, 1000);
 
 http.createServer((req, res) => {
   if (isRebuilding) {
