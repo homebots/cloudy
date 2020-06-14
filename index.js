@@ -51,7 +51,6 @@ function buildProject(project) {
 
   if (project.serviceConfig) {
     addNginxConfig(project);
-
   }
 }
 
@@ -61,7 +60,7 @@ function readBody(req, callback) {
   req.on('end', () => callback(body));
 }
 
-function updateDockerImages(_, res) {
+function updateDockerImages() {
   log('updating cloud images');
 
   if (isRebuilding) return;
@@ -123,7 +122,8 @@ function getRandomPort() {
 function addNginxConfig(project) {
   const vars = {
     ...project.env,
-    randomPort: project.port
+    randomPort: project.port,
+    service: project.service,
   };
 
   const sourceFile = project.serviceConfig;
@@ -171,7 +171,6 @@ function initializeProject(project) {
       .reduce((vars, item) => vars.concat(item), []);
   }
 }
-
 
 configuration.projects.forEach(p => initializeProject(p));
 
