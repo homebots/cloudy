@@ -34,6 +34,7 @@ function findProject(name) {
 }
 
 function deployProject(project) {
+  log('Deploying project', project.service || project.image);
   if (project.service) {
     run('docker', ['stop', project.service]);
     run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, dockerImage(project)]);
@@ -83,23 +84,23 @@ function rebuildAllProjects() {
   configuration.projects.forEach(buildProject);
 }
 
+function buildOrDeploy(project, action) {
+  if (action === 'build') {
+    buildProject(project);
+    deployProject(project);
+  } else {
+    deployProject(project);
+  }
+}
+
 function redeploySpecificImage(req, res) {
   const [, action, service] = req.url.match(/^\/(build|deploy)\/(.+)/);
   const project = findProject(service);
 
   if (project) {
-    run('git', ['pull', '--rebase']);
-
-    if (action === 'build') {
-      log(`build ${project.service}`);
-      buildProject(project);
-    } else {
-      log(`deploy ${project.service}`);
-      deployProject(project);
-    }
-
     res.writeHead(201);
     res.end();
+    FS.writeFileSync(REBUILD_LOCK, JSON.stringify({ project: service, action }));
     return;
   }
 
@@ -175,7 +176,23 @@ function initializeProject(project) {
   }
 }
 
+function checkBuildLock() {
+  if (!FS.existsSync(REBUILD_LOCK)) return;
+
+  const lock = JSON.parse(FS.readFileSync(REBUILD_LOCK));
+  FS.unlinkSync(REBUILD_LOCK);
+
+  if (lock.project) {
+    buildOrDeploy(findProject(lock.project), lock.action);
+    return;
+  }
+
+  rebuildAllProjects();
+  redeployAllImages();
+}
+
 configuration.projects.forEach(p => initializeProject(p));
+checkBuildLock();
 
 http.createServer((req, res) => {
   if (isRebuilding) {
@@ -202,7 +219,7 @@ http.createServer((req, res) => {
         res.writeHead(200);
         res.end('');
 
-        FS.writeFileSync(REBUILD_LOCK, Date.now());
+        FS.writeFileSync(REBUILD_LOCK, '{}');
         updateRepository();
         process.exit(0);
 
@@ -214,7 +231,8 @@ http.createServer((req, res) => {
 
       case isPost && /^\/(build|deploy)/.test(req.url):
         redeploySpecificImage(req, res);
-        break;
+        updateRepository();
+        process.exit(0);
 
       case isGet && req.url === '/discover':
         listServices(req, res);
@@ -234,9 +252,3 @@ http.createServer((req, res) => {
     }
   });
 }).listen(process.env.PORT || 9999);
-
-if (FS.existsSync(REBUILD_LOCK)) {
-  rebuildAllProjects();
-  redeployAllImages();
-  FS.unlinkSync(REBUILD_LOCK);
-}
