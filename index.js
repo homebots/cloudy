@@ -1,236 +1,213 @@
-const http = require('http');
-const FS = require('fs');
-const crypto = require('crypto');
-const configuration = require('./projects.json');
-const ChildProcess = require('child_process');
-const Path = require('path');
-const _sh = ChildProcess.spawnSync;
-const sh = (command, args) => _sh(command, args, { stdio: 'pipe', shell: true }).stdout.toString('utf8');
+(async () => {
+  const http = require('http');
+  const FS = require('fs').promises;
+  const crypto = require('crypto');
+  const configuration = require('./projects.json');
+  const ChildProcess = require('child_process');
+  const Path = require('path');
 
-const REBUILD_LOCK = Path.join(__dirname, '.rebuild-lock');
+  const shOptions = { stdio: 'pipe', shell: true };
+  const _sh = ChildProcess.spawnSync;
+  const sh = (command, args) => _sh(command, args, shOptions).stdout.toString('utf8');
+  const readFile = async (file) => (await FS.readFile(Path.join(__dirname, file))).toString('utf8').trim();
+  const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
+  const log = (...args) => console.log(new Date().toISOString(), ...args);
+  const dockerImage = (p) => p.from || `${configuration.registry}/${p.image}:latest`;
+  const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
+  const dockerPublish = (p) => run('docker', ['push', dockerImage(p)]);
+  const dockerBuild = (p) => run('docker', ['build', '--pull', '-q', ...buildArgs(p), '-t', dockerImage(p), `${p.projectRoot}`]);
+  const toJson = (x) => JSON.stringify(x, null, 2);
+  const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
+  const httpSecret = await readFile('.key');
+  const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
 
-const readFile = (file) => FS.readFileSync(Path.join(__dirname, file)).toString('utf8').trim();
-const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
-const log = (...args) => console.log(new Date().toISOString(), ...args);
-const dockerImage = (p) => p.from || `${configuration.registry}/${p.image}:latest`;
-const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
-const publish = (p) => run('docker', ['push', dockerImage(p)]);
-const build = (p) => run('docker', ['build', ...buildArgs(p), '-t', dockerImage(p), `${p.projectRoot}`]);
-const json = (x) => JSON.stringify(x, null, 2);
-const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
+  let isRebuilding = false;
 
-const httpSecret = readFile('.key');
-const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
-
-let isRebuilding = false;
-
-const run = (command, args) => {
-  log(command, args);
-  log(prefix(sh(command, args)));
-};
-
-function findProject(name) {
-  return configuration.projects.find(p => p.service === name);
-}
-
-function deployProject(project) {
-  log('Deploying project', project.service || project.image);
-  if (project.service) {
-    run('docker', ['stop', project.service]);
-    run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, dockerImage(project)]);
-  }
-}
-
-function buildProject(project) {
-  log('Building project', project.service || project.image);
-
-  if (project.image) {
-    build(project);
-    publish(project);
-  }
-
-  updateNginxConfig(project);
-}
-
-function readBody(req, callback) {
-  let body = '';
-  req.on('data', chunk => body += chunk.toString());
-  req.on('end', () => callback(body));
-}
-
-function updateRepository() {
-  log('updating repository');
-
-  try {
-    run('git', ['pull', '--rebase']);
-  } catch (error) {
-    log('failed to fetch', error);
-  }
-}
-
-function redeployAllImages() {
-  log('reloading cloud');
-  configuration.projects.forEach(deployProject);
-}
-
-function rebuildAllProjects() {
-  log('rebuilding everything');
-  configuration.projects.forEach(buildProject);
-}
-
-function buildAndDeploy(project, action) {
-  buildProject(project);
-  deployProject(project);
-}
-
-function redeploySpecificImage(req, res) {
-  const [, action, service] = req.url.match(/^\/(build|deploy)\/(.+)/);
-  const project = findProject(service);
-
-  if (project) {
-    res.writeHead(201);
-    res.end();
-
-    if (action === 'build') {
-      FS.writeFileSync(REBUILD_LOCK, JSON.stringify({ project: service }));
-      updateRepository();
-      process.exit(0);
-    }
-
-    deployProject(project);
-    updateNginxConfig(project);
-    reloadNginx();
-    return;
-  }
-
-  log(`service ${service} not found`);
-  res.writeHead(404);
-  res.end();
-}
-
-function listServices(req, res) {
-  log(`discovered by ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
-  res.end(json(configuration.projects.map(p => p.service).filter(Boolean)));
-}
-
-function listImages(_, res) {
-  const services = sh('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').map(name => ({ name }));
-  res.end(json(services));
-}
-
-function addNginxConfig(project) {
-  const vars = {
-    ...project.env,
-    port: project.port,
-    service: project.service,
+  const run = (command, args) => {
+    log(command, args);
+    log(prefix(sh(command, args)));
   };
 
-  const sourceFile = project.serviceConfig;
-  const source = readFile(sourceFile);
-  const content = replaceVars(source, vars);
-
-  try {
-    FS.writeFileSync(`/etc/nginx/cloudy/${project.service}.conf`, content);
-  } catch (error) {
-    log('Failed to create Nginx configuration!');
-    log(error);
-  }
-}
-
-function updateNginxConfig(project) {
-  if (project.serviceConfig) {
-    addNginxConfig(project);
-  }
-}
-
-function reloadNginx() {
-  log('Reloading Nginx');
-
-  try {
-    ChildProcess.execSync('nginx -t && service nginx reload');
-  } catch (error) {
-    log('Nginx failed to reload');
-    log(error);
-  }
-}
-
-function replaceInlinePort(text, port) {
-  return text.replace(/_port_/g, port);
-}
-
-function initializeProject(project) {
-  project.expose = [];
-  project.envVars = [];
-
-  if (project.ports) {
-    project.expose = project.ports.map(port => replaceInlinePort(`-p127.0.0.1:${port}`, project.port));
+  function filterProjects(name) {
+    return name ? configuration.projects.filter(p => p.service === name) : configuration.projects;
   }
 
-  if (project.env) {
-    project.envVars = Object.keys(project.env)
-      .map(key => ['-e', `${key}="${replaceInlinePort(project.env[key], project.port)}"`])
-      .reduce((vars, item) => vars.concat(item), []);
+  async function buildByName(serviceName) {
+    isRebuilding = true;
+
+    try {
+      filterProjects(serviceName).forEach(p => buildProject(p));
+    } catch (e) {}
+
+    isRebuilding = false;
   }
 
-  updateNginxConfig(project);
-}
-
-function checkBuildLock() {
-  if (!FS.existsSync(REBUILD_LOCK)) return;
-
-  const lock = JSON.parse(FS.readFileSync(REBUILD_LOCK));
-  FS.unlinkSync(REBUILD_LOCK);
-
-  if (lock.project) {
-    buildAndDeploy(findProject(lock.project));
-    return;
+  async function deployByName(serviceName) {
+    filterProjects(serviceName).forEach(async (p) => await deployProject(p));
+    reloadNginx();
   }
 
-  rebuildAllProjects();
-  redeployAllImages();
-}
+  function buildProject(project) {
+    log('building project', project.service || project.image);
 
-configuration.projects.forEach(p => initializeProject(p));
-checkBuildLock();
-setTimeout(reloadNginx, 1000);
-
-http.createServer((req, res) => {
-  if (isRebuilding) {
-    res.writeHead(503);
-    res.end();
+    if (project.image) {
+      dockerBuild(project);
+      dockerPublish(project);
+    }
   }
 
-  const requestSignature = req.headers['x-hub-signature'];
-  const isPost = req.method === 'POST';
-  const isGet = req.method === 'GET';
+  async function deployProject(project) {
+    log('deploying project', project.service || project.image);
 
-  readBody(req, function (body) {
-    const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(body).digest('hex');
+    if (!project.service) return;
 
-    if (isPost && payloadSignature !== requestSignature) {
-      log('Invalid signature!', payloadSignature, requestSignature);
-      res.writeHead(401, 'Unauthorized');
+    run('docker', ['stop', project.service]);
+    run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, dockerImage(project)]);
+
+    if (project.serviceConfig) {
+      await addNginxConfig(project);
+    }
+  }
+
+  function updateRepository() {
+    log('updating repository');
+
+    try {
+      run('git', ['pull', '--rebase']);
+    } catch (error) {
+      log('failed to fetch', error);
+    }
+  }
+
+  function listServices(req, res) {
+    log(`discovered by ${req.headers['x-forwarded-for'] || req.connection.remoteAddress}`);
+    res.end(toJson(configuration.projects.map(p => p.service).filter(Boolean)));
+  }
+
+  function listImages(_, res) {
+    const services = sh('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').map(name => ({
+      name
+    }));
+    res.end(toJson(services));
+  }
+
+  async function addNginxConfig(project) {
+    const vars = {
+      ...project.env,
+      port: project.port,
+      service: project.service,
+    };
+
+    const sourceFile = project.serviceConfig;
+    const source = await readFile(sourceFile);
+    const content = replaceVars(source, vars);
+
+    try {
+      await FS.writeFile(Path.join(__dirname, 'nginx-sites', `${project.service}.conf`), content);
+    } catch (error) {
+      log('Failed to create Nginx configuration!');
+      log(error);
+    }
+  }
+
+  async function reloadNginx() {
+    log('Reloading Nginx');
+
+    try {
+      ChildProcess.execSync('nginx -t && service nginx reload');
+    } catch (error) {
+      log('Nginx failed to reload');
+      log(error);
+    }
+  }
+
+  function readBody(request) {
+    return new Promise(resolve => {
+      let body = '';
+      request.on('data', chunk => body += String(chunk));
+      request.on('end', () => resolve(body));
+    });
+  }
+
+  function initializeProjectConfiguration() {
+    const replaceInlinePort = (text, port) => text.replace(/_port_/g, port);
+
+    configuration.projects.forEach(project => {
+      project.expose = [];
+      project.envVars = [];
+
+      if (project.ports) {
+        project.expose = project.ports.map(port => replaceInlinePort(`-p127.0.0.1:${port}`, project.port));
+      }
+
+      if (project.env) {
+        project.envVars = Object.keys(project.env)
+          .map(key => ['-e', `${key}="${replaceInlinePort(project.env[key], project.port)}"`])
+          .reduce((vars, item) => vars.concat(item), []);
+      }
+    });
+  }
+
+  const server = http.createServer(async (req, res) => {
+    if (isRebuilding) {
+      res.writeHead(503);
       res.end();
-      return;
+    }
+
+    const requestSignature = req.headers['x-hub-signature'];
+    const isPost = req.method === 'POST';
+    const isGet = req.method === 'GET';
+    const getProjectFromUrl = (url) => url.match(/^\/(build|deploy)\/(.+)/)[2];
+
+    if (isPost) {
+      const requestBody = await readBody(req);
+      const payloadSignature = 'sha1=' + crypto.createHmac('sha1', httpSecret).update(requestBody).digest('hex');
+
+      if (payloadSignature !== requestSignature) {
+        log('Invalid signature!', payloadSignature, requestSignature);
+        res.writeHead(401, 'Unauthorized');
+        res.end();
+        return;
+      }
     }
 
     switch (true) {
-      case isPost && req.url === '/update':
-        res.writeHead(200);
+      case isPost && req.url === '/restart':
+        res.writeHead(202);
         res.end('');
 
-        FS.writeFileSync(REBUILD_LOCK, '{}');
-        updateRepository();
-        process.exit(0);
-
-      case isPost && req.url === '/redeployAll':
-        redeployAllImages();
-        res.writeHead(201);
-        res.end();
+        setTimeout(() => process.exit(0));
         break;
 
-      case isPost && /^\/(build|deploy)/.test(req.url):
-        redeploySpecificImage(req, res);
+      case isPost && req.url === '/update':
+        res.writeHead(202);
+        res.end('');
+
+        updateRepository();
+        await buildByName();
+        await deployByName();
+        break;
+
+      case isPost && req.url === '/redeployAll':
+        res.writeHead(202);
+        res.end();
+
+        deployByName();
+        break;
+
+      case isPost && /^\/build\//.test(req.url):
+        res.writeHead(202);
+        res.end();
+
+        updateRepository();
+        buildByName(getProjectFromUrl(req.url));
+        break;
+
+      case isPost && /^\/deploy\//.test(req.url):
+        res.writeHead(202);
+        res.end();
+
+        deployByName(getProjectFromUrl(req.url));
         break;
 
       case isGet && req.url === '/discover':
@@ -250,4 +227,8 @@ http.createServer((req, res) => {
         res.end();
     }
   });
-}).listen(process.env.PORT || 9999);
+
+  server.listen(process.env.PORT || 9999);
+
+  initializeProjectConfiguration();
+})();
