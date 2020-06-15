@@ -28,10 +28,8 @@
       ],
       "env": {
         "GIT_URL": "https://github.com/homebots/relay.git",
-        "SSL": "1",
         "HTTP_PORT": "2999",
-        "SOCKET_PORT": "3000",
-        "DEBUG": "1"
+        "SOCKET_PORT": "3000"
       }
     },
     {
