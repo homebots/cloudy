@@ -38,7 +38,7 @@
       "service": "mdaas",
       "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
-      "port": 2000,
+      "port": 2001,
       "ports": [
         "_port_:_port_"
       ],
@@ -51,7 +51,7 @@
       "service": "json",
       "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
-      "port": 2001,
+      "port": 2002,
       "ports": [
         "_port_:_port_"
       ],

@@ -78,13 +78,9 @@ function rebuildAllProjects() {
   configuration.projects.forEach(buildProject);
 }
 
-function buildOrDeploy(project, action) {
-  if (action === 'build') {
-    buildProject(project);
-    deployProject(project);
-  } else {
-    deployProject(project);
-  }
+function buildAndDeploy(project, action) {
+  buildProject(project);
+  deployProject(project);
 }
 
 function redeploySpecificImage(req, res) {
@@ -94,7 +90,16 @@ function redeploySpecificImage(req, res) {
   if (project) {
     res.writeHead(201);
     res.end();
-    FS.writeFileSync(REBUILD_LOCK, JSON.stringify({ project: service, action }));
+
+    if (action === 'build') {
+      FS.writeFileSync(REBUILD_LOCK, JSON.stringify({ project: service }));
+      updateRepository();
+      process.exit(0);
+    }
+
+    deployProject(project);
+    updateNginxConfig(project);
+    reloadNginx();
     return;
   }
 
@@ -177,7 +182,7 @@ function checkBuildLock() {
   FS.unlinkSync(REBUILD_LOCK);
 
   if (lock.project) {
-    buildOrDeploy(findProject(lock.project), lock.action);
+    buildAndDeploy(findProject(lock.project));
     return;
   }
 
@@ -226,8 +231,7 @@ http.createServer((req, res) => {
 
       case isPost && /^\/(build|deploy)/.test(req.url):
         redeploySpecificImage(req, res);
-        updateRepository();
-        process.exit(0);
+        break;
 
       case isGet && req.url === '/discover':
         listServices(req, res);
