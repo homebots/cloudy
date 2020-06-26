@@ -29,7 +29,10 @@ Here's where the cloud services and docker images are declared
 }
 ```
 
-The server with run `registry.domain.com/v2/docker-image-name` with exposed ports and environment variables, using a container named `docker-container-name`.
+The server with run `registry.domain.com/v2/docker-image-name` with exposed ports and environment variables.
+The container name will be the same as `service`.
+A reverse proxy with Nginx can be set up separately to map subdomains to specific docker containers.
+For example, `service-name.mydomain.com` would map to `service-name` container at port `5000`.
 
 ## .key file
 
