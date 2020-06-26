@@ -1,5 +1,6 @@
 FROM node:lts-alpine
 
+RUN sed -i -e 's/^root::/root:!:/' /etc/shadow
 ENV HOME=/home/node
 WORKDIR /home/node
 ADD conf/.npmrc /home/node
