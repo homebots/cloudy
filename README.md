@@ -42,4 +42,4 @@ The same key can be added to `localStorage.key` in the client browser where the 
 It goes without saying that is very important to keep this key secure.
 
 This key is never sent over HTTP. Instead, it is used to sign the POST requests on client side.
-Without a key, only GET requests are allowed, which show the status of each service.
+Without a key, only GET requests are allowed, which are used just to show a list of running services and their status.
