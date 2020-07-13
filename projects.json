@@ -19,43 +19,55 @@
       ]
     },
     {
-      "from": "d.homebots.io/v2/homebots-node-app",
+      "image": "homebots-hub",
+      "projectRoot": "images/hub",
       "service": "hub",
       "serviceConfig": "nginx/hub.conf",
       "ports": [
         "2999:2999",
         "3000:3000"
       ],
+      "buildArgs": ["GIT_URL=https://github.com/homebots/relay.git"],
       "env": {
-        "GIT_URL": "https://github.com/homebots/relay.git",
         "HTTP_PORT": "2999",
         "SOCKET_PORT": "3000"
       }
     },
     {
+      "image": "homebots-mdaas",
+      "projectRoot": "images/mdaas",
       "service": "mdaas",
-      "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
-      "port": 2001,
       "ports": [
         "_port_:_port_"
       ],
+      "buildArgs": ["GIT_URL=https://github.com/homebots/mdaas.git"],
       "env": {
-        "PORT": "_port_",
-        "GIT_URL": "https://github.com/homebots/mdaas.git"
+        "PORT": "_port_"
       }
     },
     {
       "service": "json",
       "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
-      "port": 2002,
       "ports": [
         "_port_:_port_"
       ],
       "env": {
         "PORT": "_port_",
         "GIT_URL": "https://github.com/homebots/jsonstore.git"
+      }
+    },
+    {
+      "service": "esp8266-blog",
+      "from": "d.homebots.io/v2/homebots-node-app",
+      "serviceConfig": "nginx/esp8266-blog.conf",
+      "ports": [
+        "_port_:_port_"
+      ],
+      "env": {
+        "PORT": "_port_",
+        "GIT_URL": "https://github.com/esp8266-blog/blog.git"
       }
     }
   ]

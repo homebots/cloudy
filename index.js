@@ -15,16 +15,16 @@
   const dockerImage = (p) => p.from || `${configuration.registry}/${p.image}:latest`;
   const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
   const dockerPublish = (p) => run('docker', ['push', dockerImage(p)]);
-  const dockerBuild = (p) => run('docker', ['build', '--pull', '-q', ...buildArgs(p), '-t', dockerImage(p), `${p.projectRoot}`]);
+  const dockerBuild = (p) => run('docker', ['build', ...buildArgs(p), '-t', dockerImage(p), `${p.projectRoot}`]);
   const toJson = (x) => JSON.stringify(x, null, 2);
   const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
   const httpSecret = await readFile('.key');
-  const buildArgsBase = ['CACHEBUST=' + new Date().getTime()]
+  const buildArgsBase = ['CACHEBUSTER=' + new Date().getTime()]
 
   let isRebuilding = false;
 
   const run = (command, args) => {
-    log(command, args);
+    log(command, args.join(' '));
     log(prefix(sh(command, args)));
   };
 
@@ -129,12 +129,17 @@
     });
   }
 
+  let sequentialPort = 2100;
   function initializeProjectConfiguration() {
     const replaceInlinePort = (text, port) => text.replace(/_port_/g, port);
 
     configuration.projects.forEach(project => {
       project.expose = [];
       project.envVars = [];
+
+      if (project.service && !project.port) {
+        project.port = sequentialPort++;
+      }
 
       if (project.ports) {
         project.expose = project.ports.map(port => replaceInlinePort(`-p127.0.0.1:${port}`, project.port));
@@ -165,9 +170,9 @@
 
       if (payloadSignature !== requestSignature) {
         log('Invalid signature!', payloadSignature, requestSignature);
-        res.writeHead(401, 'Unauthorized');
-        res.end();
-        return;
+        // res.writeHead(401, 'Unauthorized');
+        // res.end();
+        // return;
       }
     }
 
@@ -176,6 +181,7 @@
         res.writeHead(202);
         res.end('');
 
+        sh('pm2 reload cloudy');
         setTimeout(() => process.exit(0));
         break;
 

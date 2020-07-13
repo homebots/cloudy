@@ -45,6 +45,10 @@
           class="btn btn-outline-info if-key"
         >rebuild everything</button>
         <button
+          onclick="restart()"
+          class="btn btn-outline-info if-key"
+        >restart cloud</button>
+        <button
           onclick="redeployAll()"
           class="btn btn-primary if-key"
         >reload all</button>
@@ -120,6 +124,10 @@
 
     function redeployAll() {
       postAndReload(`/redeployAll`);
+    }
+
+    function restart() {
+      postAndReload(`/restart`);
     }
 
     function update() {
