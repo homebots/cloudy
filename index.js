@@ -150,6 +150,8 @@
           .map(key => ['-e', `${key}="${replaceInlinePort(project.env[key], project.port)}"`])
           .reduce((vars, item) => vars.concat(item), []);
       }
+
+      project.envVars.push('-e', 'API_KEY=' + httpSecret);
     });
   }
 
@@ -170,9 +172,9 @@
 
       if (payloadSignature !== requestSignature) {
         log('Invalid signature!', payloadSignature, requestSignature);
-        // res.writeHead(401, 'Unauthorized');
-        // res.end();
-        // return;
+        res.writeHead(401, 'Unauthorized');
+        res.end();
+        return;
       }
     }
 
