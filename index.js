@@ -129,8 +129,8 @@
     });
   }
 
-  let sequentialPort = 2100;
   function initializeProjectConfiguration() {
+    let sequentialPort = 2100;
     const replaceInlinePort = (text, port) => text.replace(/_port_/g, port);
 
     configuration.projects.forEach(project => {
