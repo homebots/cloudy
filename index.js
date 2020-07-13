@@ -191,9 +191,11 @@
         res.writeHead(202);
         res.end('');
 
-        updateRepository();
-        await buildByName();
-        await deployByName();
+        setTimeout(async () => {
+          updateRepository();
+          await buildByName();
+          await deployByName();
+        });
         break;
 
       case isPost && req.url === '/redeployAll':

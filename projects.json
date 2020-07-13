@@ -47,27 +47,29 @@
       }
     },
     {
+      "image": "homebots-jsonstore",
+      "projectRoot": "images/jsonstore",
       "service": "json",
-      "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/service.conf",
       "ports": [
         "_port_:_port_"
       ],
+      "buildArgs": ["GIT_URL=https://github.com/homebots/jsonstore.git"],
       "env": {
-        "PORT": "_port_",
-        "GIT_URL": "https://github.com/homebots/jsonstore.git"
+        "PORT": "_port_"
       }
     },
     {
+      "image": "homebots-esp8266-blog",
+      "projectRoot": "images/esp8266-blog",
       "service": "esp8266-blog",
-      "from": "d.homebots.io/v2/homebots-node-app",
       "serviceConfig": "nginx/esp8266-blog.conf",
       "ports": [
         "_port_:_port_"
       ],
+      "buildArgs": ["GIT_URL=https://github.com/esp8266-blog/blog.git"],
       "env": {
-        "PORT": "_port_",
-        "GIT_URL": "https://github.com/esp8266-blog/blog.git"
+        "PORT": "_port_"
       }
     }
   ]
