@@ -13,13 +13,12 @@
   const prefix = (string) => string.trim().split('\n').filter(Boolean).map(line => `>> ${line}`).join('\n');
   const log = (...args) => console.log(new Date().toISOString(), ...args);
   const dockerImage = (p) => p.from || `${configuration.registry}/${p.image}:latest`;
-  const buildArgs = (p) => [...buildArgsBase, ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
+  const buildArgs = (p) => ['CACHEBUSTER=' + new Date().getTime(), ...(p.buildArgs || [])].map(arg => `--build-arg ${arg}`);
   const dockerPublish = (p) => run('docker', ['push', dockerImage(p)]);
   const dockerBuild = (p) => run('docker', ['build', ...buildArgs(p), '-t', dockerImage(p), `${p.projectRoot}`]);
   const toJson = (x) => JSON.stringify(x, null, 2);
   const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
   const httpSecret = await readFile('.key');
-  const buildArgsBase = ['CACHEBUSTER=' + new Date().getTime()]
 
   let isRebuilding = false;
 
@@ -194,7 +193,7 @@
         setTimeout(async () => {
           updateRepository();
           await buildByName();
-          await deployByName();
+          deployByName();
         });
         break;
 
@@ -209,15 +208,19 @@
         res.writeHead(202);
         res.end();
 
-        updateRepository();
-        buildByName(getProjectFromUrl(req.url));
+        setTimeout(async () => {
+          updateRepository();
+          const name = getProjectFromUrl(req.url);
+          await buildByName(name);
+          deployByName(name);
+        });
         break;
 
       case isPost && /^\/deploy\//.test(req.url):
         res.writeHead(202);
         res.end();
 
-        deployByName(getProjectFromUrl(req.url));
+        setTimeout(() => deployByName(getProjectFromUrl(req.url)));
         break;
 
       case isGet && req.url === '/discover':
