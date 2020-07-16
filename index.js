@@ -152,7 +152,7 @@
       }
 
       if (project.volumes) {
-        project.mount = project.volumes.map(volume => ['-v', volume])
+        project.mount = project.volumes.map(volume => ['-v', volume.replace('_data_', `$PWD/data/${project.service}`)])
       }
 
       project.envVars.push('-e', 'API_KEY=' + httpSecret);

@@ -56,8 +56,12 @@
       ],
       "buildArgs": ["GIT_URL=https://github.com/homebots/jsonstore.git"],
       "env": {
-        "PORT": "_port_"
-      }
+        "PORT": "_port_",
+        "STORAGE": "file"
+      },
+      "volumes": [
+        "_data_:/home/node/app/data"
+      ]
     },
     {
       "image": "homebots-esp8266-blog",
@@ -80,7 +84,7 @@
       "ports": [
         "_port_:80"
       ],
-      "buildArgs": ["GIT_URL=https://github.com/codrblog/gh-scrapper.git"],
+      "buildArgs": ["GIT_URL=https://github.com/codrblog/gh-scraper.git"],
       "env": {
         "PORT": "80"
       }
