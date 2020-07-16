@@ -246,7 +246,7 @@
     }
   });
 
-  server.listen(process.env.PORT || 9999);
+  server.listen(process.env.PORT || 9999, '127.0.0.1');
 
   initializeProjectConfiguration();
 })();

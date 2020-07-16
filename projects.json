@@ -71,6 +71,19 @@
       "env": {
         "PORT": "_port_"
       }
+    },
+    {
+      "image": "homebots-gh-scraper",
+      "projectRoot": "images/gh-scraper",
+      "service": "gh-scraper",
+      "serviceConfig": "nginx/service.conf",
+      "ports": [
+        "_port_:80"
+      ],
+      "buildArgs": ["GIT_URL=https://github.com/codrblog/gh-scrapper.git"],
+      "env": {
+        "PORT": "80"
+      }
     }
   ]
 }
