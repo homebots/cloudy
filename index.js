@@ -61,7 +61,7 @@
     if (!project.service) return;
 
     run('docker', ['stop', project.service]);
-    run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, dockerImage(project)]);
+    run('docker', ['run', '--rm', '-d', '--name', project.service, ...project.expose, ...project.envVars, ...project.mount, dockerImage(project)]);
 
     if (project.serviceConfig) {
       await addNginxConfig(project);
@@ -116,7 +116,7 @@
       ChildProcess.execSync('nginx -t && service nginx reload');
     } catch (error) {
       log('Nginx failed to reload');
-      log(error);
+      log(error.message);
     }
   }
 
@@ -135,6 +135,7 @@
     configuration.projects.forEach(project => {
       project.expose = [];
       project.envVars = [];
+      project.mount = [];
 
       if (project.service && !project.port) {
         project.port = sequentialPort++;
@@ -148,6 +149,10 @@
         project.envVars = Object.keys(project.env)
           .map(key => ['-e', `${key}="${replaceInlinePort(project.env[key], project.port)}"`])
           .reduce((vars, item) => vars.concat(item), []);
+      }
+
+      if (project.volumes) {
+        project.mount = project.volumes.map(volume => ['-v', volume])
       }
 
       project.envVars.push('-e', 'API_KEY=' + httpSecret);
