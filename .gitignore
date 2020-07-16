@@ -2,3 +2,4 @@ node_modules
 .key
 .rebuild-lock
 nginx-sites
+data/*
