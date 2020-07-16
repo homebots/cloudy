@@ -1,8 +1,8 @@
 (async () => {
+  let configuration;
   const http = require('http');
   const FS = require('fs').promises;
   const crypto = require('crypto');
-  const configuration = require('./projects.json');
   const ChildProcess = require('child_process');
   const Path = require('path');
 
@@ -128,7 +128,8 @@
     });
   }
 
-  function initializeProjectConfiguration() {
+  async function initializeProjectConfiguration() {
+    configuration = JSON.parse(await FS.readFile('./projects.json'));
     let sequentialPort = 2100;
     const replaceInlinePort = (text, port) => text.replace(/_port_/g, port);
 
@@ -197,6 +198,7 @@
 
         setTimeout(async () => {
           updateRepository();
+          await initializeProjectConfiguration();
           await buildByName();
           deployByName();
         });
