@@ -1,8 +1,6 @@
-FROM node:lts-alpine
+FROM d.homebots.io/v2/homebots-node-app
 
-RUN sed -i -e 's/^root::/root:!:/' /etc/shadow
-ENV HOME=/home/node
-WORKDIR /home/node
-ADD conf/.npmrc /home/node
-RUN set -xe && apk add --no-cache bash git openssh && npm i -g nodemon
-ENV PATH "$PATH:/home/node/npm/bin"
+ARG GIT_URL
+ARG CACHEBUSTER
+
+RUN [[ "${GIT_URL}" != "" ]] && bash /home/node/build.sh ${GIT_URL};
