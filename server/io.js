@@ -4,6 +4,11 @@ import * as Path from 'path';
 const asyncFS = FS.promises;
 const getFilePath = (...args) => Path.join(process.cwd(), ...args);
 
+export function readFileSync(...file) {
+  const buffer = FS.readFileSync(getFilePath(...file));
+  return buffer.toString('utf8').trim();
+}
+
 export async function readFile(...file) {
   const buffer = await asyncFS.readFile(getFilePath(...file));
   return buffer.toString('utf8').trim();
@@ -16,6 +21,10 @@ export async function writeFile(...args) {
 
 export async function exists(file) {
   return new Promise(resolve => FS.exists(getFilePath(file), resolve));
+}
+
+export async function existsSync(file) {
+  return FS.existsSync(getFilePath(file));
 }
 
 export function join(...args) {

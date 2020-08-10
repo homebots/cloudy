@@ -35,6 +35,8 @@ export class Log {
   }
 
   getContent(...args) {
+    args = args.map(arg => arg && arg instanceof Error ? arg.message : arg);
+
     if (args.length === 1) {
       const content = typeof args[0] !== 'object' ? { message: args[0] } : args[0];
       return { content }

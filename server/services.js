@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { Docker } from './docker.js';
+import { Github } from './github.js';
 import { FileStorage } from './storage.js';
 import { Log } from './log.js';
 import { Nginx } from './nginx.js';
@@ -49,8 +50,7 @@ class ServiceManager {
     const serviceConfiguration = this.services.get(serviceId);
 
     if (!serviceConfiguration) {
-      logger.error(`Service configuration for ${repository}:${head} not found!`);
-      return;
+      throw new Error(`Service configuration for ${repository}:${head} not found!`);
     }
 
     return await this.rebuildService(serviceConfiguration);
@@ -111,11 +111,25 @@ class ServiceManager {
     return this.serviceKeys.get(serviceId);
   }
 
-  createServiceKey(repository) {
+  async createServiceKey(repository) {
+    if (!repository) {
+      throw new Error('Invalid repository');
+    }
+
+    const repositoryExists = await Github.exists(repository);
+    if (!repositoryExists) {
+      throw new Error('Repository not found');
+    }
+
+    const serviceKeyExists = this.getServiceKey(repository);
+    if (serviceKeyExists) {
+      throw new Error('Service already exists');
+    }
+
     const serviceId = sha256(repository);
     const serviceKey = sha256(randomBytes(256).toString('hex'));
-
     this.serviceKeys.set(serviceId, serviceKey);
+
     return serviceKey;
   }
 

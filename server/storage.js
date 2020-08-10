@@ -1,15 +1,15 @@
-import { exists, writeFile, readFile } from './io.js';
+import { existsSync, writeFile, readFileSync } from './io.js';
 
 async function save(target) {
   await writeFile(target.file, JSON.stringify(target.data));
 }
 
-async function init(target, name) {
+function init(target, name) {
   target.file = `storage/${name}`;
   target.data = {};
 
-  if (await exists(target.file)) {
-    const data = await readFile(target.file);
+  if (existsSync(target.file)) {
+    const data = readFileSync(target.file);
     target.data = data && JSON.parse(data) || {};
   }
 }
