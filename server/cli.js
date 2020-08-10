@@ -10,6 +10,14 @@ export async function cli(args) {
     case 'create':
       return await Services.createServiceKey(...args);
 
+    case 'list':
+    case 'ls':
+      return (await Services.getAllServices())
+        .map(service => {
+          return `${service.id} -- ${service.type} -- ${service.ports.join(', ')} -- ${service.repository} -- ${service.domains.map(x => `https://${x}`).join(', ')}`;
+        })
+        .join('\n');
+
     default:
       throw new Error('Invalid command!');
   }
