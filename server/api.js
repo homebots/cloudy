@@ -17,12 +17,7 @@ export async function api() {
       return;
     }
 
-    const configuration = await Github.fetchServiceConfiguration(service.configurationUrl);
-
-    response.send(Services.createService({
-      ...configuration,
-      ...service,
-    }));
+    response.send(Services.deployService(service));
   });
 
   Http.when(Post, '/create', async (request, response) => {

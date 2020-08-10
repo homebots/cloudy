@@ -5,6 +5,9 @@ export async function cli(args) {
 
   switch (command) {
     case 'build':
+      return await Services.createServiceFromRepository(...args);
+
+    case 'rebuild':
       return await Services.rebuildRepository(...args);
 
     case 'create':

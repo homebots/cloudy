@@ -1,11 +1,22 @@
 import { Http } from './http.js';
 import { Log } from './log.js';
 
-const getServiceJsonUrl = (repo, head) => `https://raw.githubusercontent.com/${repo}/${head}/service.json`;
 const logger = Log.create('github');
 
 class GithubApi {
-  async getServiceFromWebhook(pushWebHook) {
+  getServiceJsonUrl(repository, head) {
+    return `https://raw.githubusercontent.com/${repository}/${head}/service.json`;
+  }
+
+  getRepositoryUrl(repository) {
+    return `https://github.com/${repository}`;
+  }
+
+  getCloneUrl(repository) {
+    return this.getRepositoryUrl(repository) + '.git';
+  }
+
+  getServiceFromWebhook(pushWebHook) {
     try {
       const head = pushWebHook.ref ? pushWebHook.ref.replace(/^refs\/.+\//, '') : 'master';
       const repository = pushWebHook.repository.full_name;
@@ -14,13 +25,7 @@ class GithubApi {
         throw new Error('Private repositories not allowed');
       }
 
-      return {
-        repository,
-        url: pushWebHook.repository.url,
-        cloneUrl: pushWebHook.repository.clone_url,
-        configurationUrl: getServiceJsonUrl(repository, head),
-        head,
-      };
+      return this.getServiceFromRepository(repository, head);
     } catch (error) {
       logger.debug(pushWebHook);
       logger.error(error);
@@ -28,9 +33,19 @@ class GithubApi {
     }
   }
 
+  getServiceFromRepository(repository, head = 'master') {
+    return {
+      repository,
+      head,
+      url: this.getRepositoryUrl(repository),
+      cloneUrl: this.getCloneUrl(repository),
+      configurationUrl: this.getServiceJsonUrl(repository, head),
+    }
+  }
+
   async exists(repository) {
     const requestOptions = { method: 'HEAD' };
-    const response = await Http.fetch('https://github.com/' + repository, requestOptions);
+    const response = await Http.fetch(this.getRepositoryUrl(repository), requestOptions);
 
     return response.ok;
   }

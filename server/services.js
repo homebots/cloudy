@@ -28,9 +28,13 @@ class ServiceManager {
     return Object.values(status);
   }
 
-  async createService(service) {
+  async deployService(service) {
     try {
-      const cloudyServiceConfig = this.createServiceConfiguration(service);
+      const configuration = await Github.fetchServiceConfiguration(service.configurationUrl);
+      const cloudyServiceConfig = this.createServiceConfiguration({
+        ...service,
+        ...configuration,
+      });
 
       setTimeout(async () => {
         this.services.set(cloudyServiceConfig.id, cloudyServiceConfig);
@@ -75,7 +79,7 @@ class ServiceManager {
     const serviceType = this.getServiceType(service);
     const httpPort = this.getRandomPort();
     const domains = [service.domain, serviceId.slice(0, 7) + '.' + cloudyDomain].filter(Boolean);
-    const hasWebSocket = !!service.webSocket;
+    const hasWebSocket = !!service.webSocket && service.webSocket.path;
     const webSocket = hasWebSocket ? { path: service.webSocket.path } : null;
     const ports = [httpPort];
     const env = {
@@ -126,11 +130,23 @@ class ServiceManager {
       throw new Error('Service already exists');
     }
 
-    const serviceId = sha256(repository);
+    const serviceKeyId = sha256(repository);
     const serviceKey = sha256(randomBytes(256).toString('hex'));
-    this.serviceKeys.set(serviceId, serviceKey);
+
+    this.serviceKeys.set(serviceKeyId, serviceKey);
 
     return serviceKey;
+  }
+
+  async createServiceFromRepository(repository, head = 'master') {
+    const serviceKeyId = sha256(repository);
+
+    if (!this.serviceKeys.has(serviceKeyId)) {
+      throw new Error(`Service for ${repository} not registered`);
+    }
+
+    const service = await Github.getServiceFromRepository(repository, head);
+    return Services.deployService(service);
   }
 
   getServiceType(service) {
