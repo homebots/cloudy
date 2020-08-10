@@ -57,13 +57,17 @@ class ServiceManager {
   }
 
   async rebuildService(cloudyServiceConfig) {
-    this.building = true;
-    Docker.createImage(cloudyServiceConfig);
-    Docker.stopService(cloudyServiceConfig);
-    Docker.runService(cloudyServiceConfig);
-    await Nginx.configureService(cloudyServiceConfig);
-    Nginx.reload();
-    this.building = false;
+    try {
+      this.building = true;
+      Docker.createImage(cloudyServiceConfig);
+      Docker.stopService(cloudyServiceConfig);
+      Docker.runService(cloudyServiceConfig);
+      await Nginx.configureService(cloudyServiceConfig);
+      Nginx.reload();
+    } catch (error) {
+      this.building = false;
+      throw error;
+    }
   }
 
   createServiceConfiguration(service) {
