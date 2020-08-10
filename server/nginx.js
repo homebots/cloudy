@@ -2,17 +2,20 @@ import { Shell } from './shell.js';
 import { readFile, writeFile } from './io.js';
 import { Log } from './log.js';
 
-const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable]);
+const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => (vars[variable] || ''));
 const logger = Log.create('nginx');
 class NginxManager {
   async configureService(service) {
     const vars = {
       port: service.env.PORT,
+      webSocketPort: service.env.WEBSOCKET_PORT,
       domains: service.domains.join(' '),
     };
 
     const template = await readFile('server', 'service.conf');
-    const templateWithWebSockets = template.replace('%webSocket%', this.getWebSocketConfig(service));
+    const templateWithWebSockets = template
+      .replace('%webSocket%', this.getWebSocketConfig(service))
+      .replace('%secureWebSocket%', this.getWebSocketConfig(service, true));
     const content = replaceVars(templateWithWebSockets, vars);
 
     try {
@@ -33,20 +36,20 @@ class NginxManager {
     }
   }
 
-  getWebSocketConfig(service) {
-    if (!service.webSockets) {
+  getWebSocketConfig(service, isSecure = false) {
+    if (!service.webSocket) {
       return '';
     }
 
     return  `
-    location /${service.webSockets.path} {
+    location /${service.webSocket.path} {
       proxy_set_header Host $http_host;
-      proxy_ssl_server_name on;
+      ${isSecure ? 'proxy_ssl_server_name on;' : ''}
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
       proxy_read_timeout 86400;
-      proxy_pass http://localhost:${service.webSockets.port};
+      proxy_pass http://localhost:{{webSocketPort}};
     }
     `;
   }

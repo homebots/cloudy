@@ -67,15 +67,20 @@ class ServiceManager {
   createServiceConfiguration(service) {
     const serviceId = this.getServiceId(service.repository, service.head);
     const serviceType = this.getServiceType(service);
-    const httpPort = 3000 + Math.round(Math.random() * 999);
+    const httpPort = this.getRandomPort();
     const domains = [service.domain, serviceId.slice(0, 7) + '.' + cloudyDomain].filter(Boolean);
-
+    const hasWebSocket = !!service.webSocket;
+    const webSocket = hasWebSocket ? { path: service.webSocket.path } : null;
+    const ports = [httpPort];
     const env = {
       ...(service.env || {}),
       PORT: httpPort,
     };
 
-    const ports = (service.ports || []).concat([httpPort]);
+    if (hasWebSocket) {
+      env.WEBSOCKET_PORT = getRandomPort();
+      ports.push(env.WEBSOCKET_PORT);
+    }
 
     return {
       id: serviceId,
@@ -84,7 +89,7 @@ class ServiceManager {
       cloneUrl: service.cloneUrl,
       branch: service.head,
       repository: service.repository,
-      webSocket: service.webSocket,
+      webSocket,
       domains,
       ports,
       env,
@@ -110,6 +115,18 @@ class ServiceManager {
 
   getServiceType(service) {
     return service.type && Docker.availableServiceTypes.includes(service.type) ? service.type : Docker.defaultServiceType;
+  }
+
+  getRandomPort() {
+    const newRandomPort = () => 3000 + Math.round(Math.random() * 60000);
+    const portsInUse = this.getAllServices().reduce((ports, service) => ports.concat(service.ports), []);
+    let port;
+
+    while (port = newRandomPort()) {
+      if (portsInUse.includes(port) === false) {
+        return port;
+      }
+    }
   }
 }
 

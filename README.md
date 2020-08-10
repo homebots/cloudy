@@ -49,8 +49,12 @@ Add a file called `service.json` to a GitHub repository, with any of the followi
     "DEBUG": "true",
   },
 
-  // additional ports to expose
-  "ports": [1234, 5678]
+  // incoming websockets support
+  // In this example, traffic for websocket upgrades
+  // will be redirected to 'localhost:{WEBSOCKET_PORT}/ws'
+  webSocket: {
+    "path": "/ws"
+  }
 }
 ```
 
@@ -61,6 +65,8 @@ In addition to any variables provided by a service configuration, these will be 
 ```
 DATA_DIR          A folder where any files can be stored
 GIT_URL           https://github.com/origin-repo/name
+PORT              port for http incoming traffic
+WEBSOCKET_PORT    port for incoming WebSocket connections
 ```
 
 ## Security and the .key file
