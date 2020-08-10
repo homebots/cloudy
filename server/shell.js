@@ -24,8 +24,7 @@ export class Shell {
   static exec(command, args) {
     const commandOutput = spawnSync(command, args, shOptions)
 
-    if (commandOutput.error || commandOutput.status !== 0) {
-      logger
+    if (commandOutput.error || Number(commandOutput.status) !== 0) {
       throw new Error(`Command ${command} failed with code ${commandOutput.status}:\n${commandOutput.stderr.toString()}`);
     }
 

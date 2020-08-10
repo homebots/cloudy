@@ -16,7 +16,7 @@ class ServiceManager {
     this.serviceKeys = FileStorage.for('serviceKeys');
   }
 
-  async getAllServices() {
+  getAllServices() {
     const allServices = this.services.getAll();
     const runningServices = Docker.getRunningContainers();
     const status = allServices.reduce((map, service) => (map[service.id] = service, map), {});
@@ -84,7 +84,7 @@ class ServiceManager {
     };
 
     if (hasWebSocket) {
-      env.WEBSOCKET_PORT = getRandomPort();
+      env.WEBSOCKET_PORT = this.getRandomPort();
       ports.push(env.WEBSOCKET_PORT);
     }
 
