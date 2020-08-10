@@ -40,8 +40,12 @@ class HttpServer {
   }
 
   checkProtectedRoute(request, secret) {
+    if (!secret) {
+      return false;
+    }
+
     const requestSignature = request.headers['x-hub-signature'];
-    const payloadSignature = 'sha1=' + sha1(secret, request.bodyText || request.body);
+    const payloadSignature = 'sha1=' + sha1(secret, request.bodyText || request.body || '');
     const valid = payloadSignature === requestSignature;
 
     if (!valid) {
