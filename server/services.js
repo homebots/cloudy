@@ -30,14 +30,10 @@ class ServiceManager {
   async createService(service) {
     try {
       const cloudyServiceConfig = this.createServiceConfiguration(service);
-      setTimeout(async () => {
-        Docker.createImage(cloudyServiceConfig);
-        Docker.stopService(cloudyServiceConfig);
-        Docker.runService(cloudyServiceConfig);
-        await Nginx.configureService(cloudyServiceConfig);
-        Nginx.reload();
 
+      setTimeout(async () => {
         this.services.set(cloudyServiceConfig.id, cloudyServiceConfig);
+        this.rebuildService(cloudyServiceConfig);
       });
 
       return cloudyServiceConfig.id;
@@ -48,8 +44,28 @@ class ServiceManager {
     }
   }
 
+  async rebuildRepository(repository, head = 'master') {
+    const serviceId = Services.getServiceId(repository, head);
+    const serviceConfiguration = this.services.get(serviceId);
+
+    if (!serviceConfiguration) {
+      logger.error(`Service configuration for ${repository}:${head} not found!`);
+      return;
+    }
+
+    return await this.rebuildService(serviceConfiguration);
+  }
+
+  async rebuildService(cloudyServiceConfig) {
+    Docker.createImage(cloudyServiceConfig);
+    Docker.stopService(cloudyServiceConfig);
+    Docker.runService(cloudyServiceConfig);
+    await Nginx.configureService(cloudyServiceConfig);
+    Nginx.reload();
+  }
+
   createServiceConfiguration(service) {
-    const serviceId = this.getServiceId(service);
+    const serviceId = this.getServiceId(service.repository, service.head);
     const serviceType = this.getServiceType(service);
     const httpPort = 3000 + Math.round(Math.random() * 999);
     const domains = [service.domain, serviceId.slice(0, 7) + '.' + cloudyDomain].filter(Boolean);
@@ -75,8 +91,8 @@ class ServiceManager {
     };
   }
 
-  getServiceId(service) {
-    return sha256(service.repository + service.head);
+  getServiceId(repository, head) {
+    return sha256(repository + head);
   }
 
   getServiceKey(repository) {

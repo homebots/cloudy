@@ -61,4 +61,21 @@ async function main() {
   Http.listen(process.env.PORT || 9999, '127.0.0.1');
 }
 
-main();
+async function cli(args) {
+  const command = args.shift();
+
+  switch (command) {
+    case 'build':
+      Services.rebuildRepository(...args);
+      break;
+
+    default:
+      console.error('Invalid command!');
+  }
+}
+
+if (process.argv.length === 2) {
+  main();
+} else {
+  cli(process.argv.slice(2));
+}

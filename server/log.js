@@ -46,23 +46,22 @@ export class Log {
   write(type, logEntry)  {
     switch(logOutput) {
       case 'http':
+        // http.push(toJson({
+        //   type,
+        //   time: Date.now(),
+        //   from: this.name,
+        //   ...logEntry
+        // }));
         break;
 
       case 'console':
       default:
-        console.log(toJson({
+        console.log(
+          `[${new Date().toISOString().slice(0, 10)}]`,
           type,
-          time: Date.now(),
-          from: this.name,
-          ...logEntry
-        }));
-
-        // console.log(
-        //   `[${new Date().toISOString().slice(0, 10)}]`,
-        //   type,
-        //   this.name,
-        //   toJson(logEntry),
-        // );
+          this.name,
+          JSON.stringify(logEntry, null, 2),
+        );
     }
   }
 }
