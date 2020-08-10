@@ -7,7 +7,7 @@ const logger = Log.create('github');
 class GithubApi {
   async getServiceFromWebhook(pushWebHook) {
     try {
-      const head = pushWebHook.ref.replace(/^refs\/.+\//, '');
+      const head = pushWebHook.ref ? pushWebHook.ref.replace(/^refs\/.+\//, '') : 'master';
       const repository = pushWebHook.repository.full_name;
 
       if (pushWebHook.repository.private) {
