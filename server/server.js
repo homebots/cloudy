@@ -1,5 +1,6 @@
 import { Log } from './log.js';
 import { Shell } from './shell.js';
+import { Services } from './services.js';
 
 const logger = Log.create('server');
 
@@ -13,7 +14,9 @@ class ServerManager {
   }
 
   reload() {
-    Shell.exec('pm2', ['reload', 'cloudy']);
+    const exit = () => (Services.building || Shell.exec('pm2', ['reload', 'cloudy']));
+    exit();
+    setInterval(exit, 1000);
   }
 }
 
