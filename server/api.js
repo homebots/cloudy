@@ -9,7 +9,7 @@ export async function api() {
 
   Http.when(Get, '/services', (_, response) => response.send(Services.getAllServices()));
   Http.when(Post, '/deploy', async (request, response) => {
-    const service = await Github.getServiceFromWebhook(request.body);
+    const service = Github.getServiceFromWebhook(request.body);
     const serviceKey = Services.getServiceKey(service.repository);
 
     if (!Http.checkProtectedRoute(request, serviceKey)) {

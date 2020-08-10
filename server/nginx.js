@@ -1,5 +1,5 @@
 import { Shell } from './shell.js';
-import { readFile, writeFile, deleteFile } from './io.js';
+import { readFile, writeFile, deleteFile, exists } from './io.js';
 import { Log } from './log.js';
 
 const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => (vars[variable] || ''));
@@ -27,7 +27,11 @@ class NginxManager {
   }
 
   async deleteServiceConfig(service) {
-    return await deleteFile(`nginx-sites/${service.id}.conf`);
+    if (await exists('nginx-sites', `${service.id}.conf`)) {
+      return await deleteFile('nginx-sites', `${service.id}.conf`);
+    }
+
+    return null;
   }
 
   reload() {

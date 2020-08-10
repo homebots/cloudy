@@ -19,7 +19,7 @@ class ServiceManager {
   getAllServices() {
     const allServices = this.services.getAll();
     const runningServices = Docker.getRunningContainers();
-    const status = allServices.reduce((map, service) => (map[service.id] = service, map), {});
+    const status = allServices.reduce((map, service) => (map[service.id] = {...service, online: false}, map), {});
 
     runningServices
       .filter(name => !!status[name])

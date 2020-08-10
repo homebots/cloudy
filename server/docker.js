@@ -32,10 +32,13 @@ class DockerManager {
       const buildArgs = getBuildArgs(['GIT_URL=' + service.cloneUrl]);
       const folder = pathByType[service.type];
 
-      const imageId = Shell.execAndLog('docker', ['build', '-q', ...buildArgs, '-t', getDockerTag(service), folder]);
-      service.imageId = imageId;
-    } catch {
-      throw new Error('Failed to create image for ' + service.cloneUrl);
+      if (!folder) {
+        throw new Error(`Invalid service type: ${service.type}`);
+      }
+
+      Shell.execAndLog('docker', ['build', '-q', ...buildArgs, '-t', getDockerTag(service), folder]);
+    } catch (error) {
+      throw new Error('Failed to create image for ' + service.cloneUrl + ':\n' + error.message);
     }
   }
 

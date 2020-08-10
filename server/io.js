@@ -23,8 +23,8 @@ export async function deleteFile(...args) {
   return await asyncFS.unlink(getFilePath(...args));
 }
 
-export async function exists(file) {
-  return new Promise(resolve => FS.exists(getFilePath(file), resolve));
+export async function exists(...file) {
+  return new Promise(resolve => FS.exists(getFilePath(...file), resolve));
 }
 
 export async function existsSync(file) {

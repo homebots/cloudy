@@ -24,7 +24,7 @@ export async function cli(args) {
     case 'ls':
       return Services.getAllServices()
         .map(service => {
-          return `${service.id} -- ${service.type} -- ${service.ports.join(', ')} -- ${service.repository}@${service.branch} -- ${service.domains.map(x => `https://${x}`).join(', ')}`;
+          return `[ ${service.online ? 'v' : '!'} ] ${service.id} -- ${service.type} -- ${service.ports.join(', ')} -- ${service.repository} ${service.branch} -- ${service.domains.map(x => `https://${x}`).join(', ')}`;
         })
         .join('\n');
 

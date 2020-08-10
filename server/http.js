@@ -41,6 +41,7 @@ class HttpServer {
 
   checkProtectedRoute(request, secret) {
     if (!secret) {
+      logger.error(`No secret provided to check ${request.id}`);
       return false;
     }
 
