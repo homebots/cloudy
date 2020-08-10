@@ -34,7 +34,7 @@ Then just run `node index.js` in a host machine. Use of [`pm2`](https://www.npmj
 
 Add a file called `service.json` to a GitHub repository, with any of the following options:
 
-```json
+```
 {
   // one of "node" or "nginx". default is "node"
   "type": "node",
