@@ -79,3 +79,14 @@ if (process.argv.length === 2) {
 } else {
   cli(process.argv.slice(2));
 }
+
+function exit() {
+  if (!Services.building) {
+    process.exit(0);
+  }
+}
+
+process.on('SIGINT', function() {
+  exit();
+  setInterval(exit, 1000);
+});
