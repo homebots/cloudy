@@ -10,6 +10,9 @@ export async function cli(args) {
     case 'create':
       return await Services.createServiceKey(...args);
 
+    case 'getkey':
+      return await Services.getServiceKey(...args);
+
     case 'list':
     case 'ls':
       return (await Services.getAllServices())
