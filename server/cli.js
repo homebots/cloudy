@@ -13,6 +13,7 @@ export async function cli(args) {
     case 'create':
       return await Services.createServiceKey(...args);
 
+    case 'del':
     case 'delete':
       return await Services.deleteService(...args);
 
@@ -23,7 +24,7 @@ export async function cli(args) {
     case 'ls':
       return Services.getAllServices()
         .map(service => {
-          return `${service.id} -- ${service.type} -- ${service.ports.join(', ')} -- ${service.repository} -- ${service.domains.map(x => `https://${x}`).join(', ')}`;
+          return `${service.id} -- ${service.type} -- ${service.ports.join(', ')} -- ${service.repository}@${service.branch} -- ${service.domains.map(x => `https://${x}`).join(', ')}`;
         })
         .join('\n');
 
