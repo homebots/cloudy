@@ -27,14 +27,6 @@ class DockerManager {
     return Shell.exec('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n');
   }
 
-  startContainer(container) {
-    logger.log('start container');
-  }
-
-  stopContainer(container) {
-    logger.log('stop container');
-  }
-
   createImage(service) {
     try {
       const buildArgs = getBuildArgs(['GIT_URL=' + service.cloneUrl]);
@@ -72,7 +64,7 @@ class DockerManager {
     Shell.execAndLog('docker', ['run', '--rm', '-d', ...args, getDockerTag(service)]);
   }
 
-  stopService(service) {
+  async stopService(service) {
     const runningContainers = this.getRunningContainers();
 
     if (runningContainers.includes(service.id)) {

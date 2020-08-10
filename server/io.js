@@ -19,6 +19,10 @@ export async function writeFile(...args) {
   return await asyncFS.writeFile(getFilePath(...args), content);
 }
 
+export async function deleteFile(...args) {
+  return await asyncFS.unlink(getFilePath(...args));
+}
+
 export async function exists(file) {
   return new Promise(resolve => FS.exists(getFilePath(file), resolve));
 }

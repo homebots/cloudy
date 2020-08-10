@@ -1,11 +1,11 @@
 import { Shell } from './shell.js';
-import { readFile, writeFile } from './io.js';
+import { readFile, writeFile, deleteFile } from './io.js';
 import { Log } from './log.js';
 
 const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => (vars[variable] || ''));
 const logger = Log.create('nginx');
 class NginxManager {
-  async configureService(service) {
+  async createServiceConfig(service) {
     const vars = {
       port: service.env.PORT,
       webSocketPort: service.env.WEBSOCKET_PORT,
@@ -24,6 +24,10 @@ class NginxManager {
       logger.error('Failed to create Nginx configuration!')
       logger.debug(error);
     }
+  }
+
+  async deleteServiceConfig(service) {
+    return await deleteFile(`nginx-sites/${service.id}.conf`);
   }
 
   reload() {

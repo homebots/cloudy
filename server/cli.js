@@ -13,6 +13,9 @@ export async function cli(args) {
     case 'create':
       return await Services.createServiceKey(...args);
 
+    case 'delete':
+      return await Services.deleteService(...args);
+
     case 'getkey':
       return await Services.getServiceKey(...args);
 

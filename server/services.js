@@ -66,53 +66,12 @@ class ServiceManager {
       Docker.createImage(cloudyServiceConfig);
       Docker.stopService(cloudyServiceConfig);
       Docker.runService(cloudyServiceConfig);
-      await Nginx.configureService(cloudyServiceConfig);
+      await Nginx.createServiceConfig(cloudyServiceConfig);
       Nginx.reload();
     } catch (error) {
       this.building = false;
       throw error;
     }
-  }
-
-  createServiceConfiguration(service) {
-    const serviceId = this.getServiceId(service.repository, service.head);
-    const serviceType = this.getServiceType(service);
-    const httpPort = this.getRandomPort();
-    const domains = [service.domain, serviceId.slice(0, 7) + '.' + cloudyDomain].filter(Boolean);
-    const hasWebSocket = !!service.webSocket && service.webSocket.path;
-    const webSocket = hasWebSocket ? { path: service.webSocket.path } : null;
-    const ports = [httpPort];
-    const env = {
-      ...(service.env || {}),
-      PORT: httpPort,
-    };
-
-    if (hasWebSocket) {
-      env.WEBSOCKET_PORT = this.getRandomPort();
-      ports.push(env.WEBSOCKET_PORT);
-    }
-
-    return {
-      id: serviceId,
-      type: serviceType,
-      url: service.url,
-      cloneUrl: service.cloneUrl,
-      branch: service.head,
-      repository: service.repository,
-      webSocket,
-      domains,
-      ports,
-      env,
-    };
-  }
-
-  getServiceId(repository, head) {
-    return sha256(repository + head);
-  }
-
-  getServiceKey(repository) {
-    const serviceId = sha256(repository);
-    return this.serviceKeys.get(serviceId);
   }
 
   async createServiceKey(repository) {
@@ -147,6 +106,62 @@ class ServiceManager {
 
     const service = await Github.getServiceFromRepository(repository, head);
     return Services.deployService(service);
+  }
+
+  async deleteService(repository, head = 'master') {
+    const serviceId = this.getServiceId(repository, head);
+
+    if (!this.services.has(serviceId)) {
+      throw new Error(`Service for ${repository}:${head} not found`);
+    }
+
+    const service = this.services.get(serviceId);
+    await Docker.stopService(service);
+    await Nginx.deleteServiceConfig(service);
+
+    Nginx.reload();
+    this.services.delete(serviceId);
+  }
+
+  getServiceId(repository, head) {
+    return sha256(repository + head);
+  }
+
+  getServiceKey(repository) {
+    const serviceId = sha256(repository);
+    return this.serviceKeys.get(serviceId);
+  }
+
+  createServiceConfiguration(service) {
+    const serviceId = this.getServiceId(service.repository, service.head);
+    const serviceType = this.getServiceType(service);
+    const httpPort = this.getRandomPort();
+    const domains = [service.domain, serviceId.slice(0, 7) + '.' + cloudyDomain].filter(Boolean);
+    const hasWebSocket = !!service.webSocket && service.webSocket.path;
+    const webSocket = hasWebSocket ? { path: service.webSocket.path } : null;
+    const ports = [httpPort];
+    const env = {
+      ...(service.env || {}),
+      PORT: httpPort,
+    };
+
+    if (hasWebSocket) {
+      env.WEBSOCKET_PORT = this.getRandomPort();
+      ports.push(env.WEBSOCKET_PORT);
+    }
+
+    return {
+      id: serviceId,
+      type: serviceType,
+      url: service.url,
+      cloneUrl: service.cloneUrl,
+      branch: service.head,
+      repository: service.repository,
+      webSocket,
+      domains,
+      ports,
+      env,
+    };
   }
 
   getServiceType(service) {
