@@ -1,19 +1,19 @@
 {
   "name": "@homebots/cloudy",
   "version": "1.0.0",
-  "description": "A tiny REST API to deploy micro services from GitHub repositories",
+  "description": "A tiny REST API to deploy micro services from GitHub repositories to Docker containers",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/homebots/cloudy.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Darlan Alves <me@darlanalv.es>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/homebots/cloudy/issues"
   },

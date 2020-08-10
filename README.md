@@ -50,8 +50,8 @@ Add a file called `service.json` to a GitHub repository, with any of the followi
   },
 
   // incoming websockets support
-  // In this example, traffic for websocket upgrades
-  // will be redirected to 'localhost:{WEBSOCKET_PORT}/ws'
+  // In this example, traffic for websocket upgrades will be
+  // redirected to 'http://localhost:{WEBSOCKET_PORT}/ws'
   webSocket: {
     "path": "/ws"
   }
@@ -64,18 +64,16 @@ In addition to any variables provided by a service configuration, these will be 
 
 ```
 DATA_DIR          A folder where any files can be stored
-GIT_URL           https://github.com/origin-repo/name
 PORT              port for http incoming traffic
 WEBSOCKET_PORT    port for incoming WebSocket connections
 ```
 
-## Security and the .key file
+## Auto update and the .key file
 
-Create a very long key hash in a file called `.key` (in the server root folder) to secure the server.
+You can create a very long key hash in a file called `.key` (in the server root folder).
+This key can be used in GitHub as the "Secret" input to add a WebHook for Cloudy updates.
 
-It goes without saying that is very important to keep this key secure.
-
-Then use this key in the 'Secret' input of GitHub Webhooks, in every repository that will deploy a service.
+Point a webhook to `https://cloudy-host:port/reload/` and every commit will automatically update the Cloudy instance.
 
 ## Adding a deploy Webhook
 
@@ -88,10 +86,16 @@ curl -X POST 'https://cloudy.example.com/create' --data 'repository/name'
 >> 4de1f5aab51b969dace864d506ad88cd1bd4c5c710b6145ff2e196012f3d292f
 ```
 
-Go to `Repository Settings > Webhooks` and add a new webhook (https://github.com/repository/name/settings/hooks/new)
+> It goes without saying that is very important to keep this key secure!
+> This key can be used to trigger service updates
+
+Go to the `Repository Settings > Webhooks` and add a new webhook (https://github.com/{repository/name}/settings/hooks/new)
 
 - URL: the domain where Cloudy is running + '/deploy', e.g. `https://cloudy.example.com/deploy`
 
 - Content Type: application/json
 
-- Secret: `4de1f5aab51b969dace864d506ad88cd1bd4c5c710b6145ff2e196012f3d292f`
+- Secret: `4de1f5aab51b969dace864d506ad88cd1bd4c5c710b6145ff2e196012f3d292f` (from previous step)
+
+Done!
+Now every commit will redeploy that repo in a Docker Container!

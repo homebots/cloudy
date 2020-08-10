@@ -1,1 +1,0 @@
-curl -v -X POST http://localhost:9999/webhook -H 'content-type: application/json' -H 'x-hub-signature: sha1=0f2cf5ae075a4cad15986c2c2ec409c3ff99e630' --data @./test-build.json
