@@ -12,7 +12,10 @@ export class Shell {
 
     try {
       const output = Shell.exec(command, args);
-      logger.log(logPrefix(output));
+
+      if (output) {
+        logger.log(logPrefix(output));
+      }
 
       return output;
     } catch (error) {

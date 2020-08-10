@@ -28,8 +28,8 @@ class NginxManager {
 
   reload() {
     try {
-      Shell.execAndLog('nginx', ['-t']);
-      Shell.execAndLog('service', ['nginx', 'reload']);
+      Shell.exec('nginx', ['-t']);
+      Shell.exec('service', ['nginx', 'reload']);
     } catch (error) {
       logger.error('Failed to reload Nginx configuration!')
       logger.debug(error);
