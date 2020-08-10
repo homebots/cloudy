@@ -13,7 +13,7 @@ class ServerManager {
   }
 
   reload() {
-    Shell.exec('pm2 reload cloudy');
+    Shell.exec('pm2', ['reload', 'cloudy']);
   }
 }
 

@@ -28,6 +28,13 @@ class GithubApi {
     }
   }
 
+  async exists(repository) {
+    const requestOptions = { method: 'HEAD' };
+    const response = await Http.fetch('https://github.com/' + repository, requestOptions);
+
+    return response.ok;
+  }
+
   async fetchServiceConfiguration(configurationUrl) {
     const headers = {
       'user-agent': 'homebots/cloudy',

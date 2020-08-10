@@ -25,11 +25,17 @@ async function main() {
     }));
   });
 
-  Http.when(Post, '/create', async(request, response) => {
+  Http.when(Post, '/create', async (request, response) => {
     const repository = String(request.body || '');
 
     if (!repository) {
       response.send(400, 'Invalid repository');
+      return;
+    }
+
+    const repositoryExists = await Github.exists(repository);
+    if (!repositoryExists) {
+      response.send(404, 'Repository not found');
       return;
     }
 

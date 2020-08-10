@@ -25,8 +25,4 @@ export class Shell {
 
     return commandOutput.stdout.toString('utf8');
   }
-
-  static exec2(command, args) {
-    logger.log(command + ' ' + args.join(' '));
-  }
 }
