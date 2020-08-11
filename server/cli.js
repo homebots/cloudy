@@ -7,11 +7,17 @@ export async function cli(args) {
     case 'build':
       return await Services.createServiceFromRepository(...args);
 
-    case 'rebuild':
-      return await Services.rebuildRepository(...args);
+    case 'build-local':
+      return await Services.buildServiceFromStoredSettings(...args);
 
     case 'create':
       return await Services.createServiceKey(...args);
+
+    case 'stop':
+      return await Services.stopService(...args);
+
+    case 'start':
+      return await Services.startService(...args);
 
     case 'del':
     case 'delete':

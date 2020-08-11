@@ -38,8 +38,8 @@ class ServiceManager {
 
       setTimeout(async () => {
         this.services.set(cloudyServiceConfig.id, cloudyServiceConfig);
-        this.rebuildService(cloudyServiceConfig);
-      });
+        this.buildServiceFromConfiguration(cloudyServiceConfig);
+      }, 10);
 
       return cloudyServiceConfig.id;
     } catch (error) {
@@ -49,18 +49,22 @@ class ServiceManager {
     }
   }
 
-  async rebuildRepository(repository, head = 'master') {
-    const serviceId = Services.getServiceId(repository, head);
-    const serviceConfiguration = this.services.get(serviceId);
-
-    if (!serviceConfiguration) {
-      throw new Error(`Service configuration for ${repository}:${head} not found!`);
-    }
-
-    return await this.rebuildService(serviceConfiguration);
+  getServiceConfiguration(repository, head) {
+    const serviceId = this.getServiceId(repository, head);
+    return this.services.get(serviceId);
   }
 
-  async rebuildService(cloudyServiceConfig) {
+  async buildServiceFromStoredSettings(repository, head = 'master') {
+    const serviceConfiguration = this.getServiceConfiguration(repository, head);
+
+    if (!serviceConfiguration) {
+      throw new Error(`Local service configuration for ${repository}:${head} not found!`);
+    }
+
+    return await this.buildServiceFromConfiguration(serviceConfiguration);
+  }
+
+  async buildServiceFromConfiguration(cloudyServiceConfig) {
     try {
       this.building = true;
       Docker.createImage(cloudyServiceConfig);
@@ -72,6 +76,16 @@ class ServiceManager {
       this.building = false;
       throw error;
     }
+  }
+
+  stopService(repository, head = 'master') {
+    const serviceConfiguration = this.getServiceConfiguration(repository, head);
+    Docker.stopService(serviceConfiguration);
+  }
+
+  startService(repository, head = 'master') {
+    const serviceConfiguration = this.getServiceConfiguration(repository, head);
+    Docker.runService(serviceConfiguration);
   }
 
   async createServiceKey(repository) {
@@ -105,7 +119,7 @@ class ServiceManager {
     }
 
     const service = await Github.getServiceFromRepository(repository, head);
-    return Services.deployService(service);
+    return this.deployService(service);
   }
 
   async deleteService(repository, head = 'master') {
