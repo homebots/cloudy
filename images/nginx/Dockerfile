@@ -1,4 +1,4 @@
-FROM d.homebots.io/v2/homebots-nginx
+FROM d.homebots.io/v2/nginx
 
 ARG GIT_URL
 ARG CACHEBUSTER

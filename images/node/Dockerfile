@@ -1,4 +1,4 @@
-FROM d.homebots.io/v2/homebots-node-app
+FROM d.homebots.io/v2/node-app
 
 ARG GIT_URL
 ARG CACHEBUSTER
