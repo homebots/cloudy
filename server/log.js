@@ -4,7 +4,7 @@ const toJson = (x) => JSON.stringify(x);
 const logOutput = process.env.LOG_OUTPUT || 'console';
 
 export const serializeError = (error) => (error && error instanceof Error) ? error.stack : String(error);
-
+const timestamp = () => new Date().toISOString().slice(0, 19).replace('T', ' ');
 export class Log {
   static create(name) {
     return new Log(name);
@@ -59,7 +59,7 @@ export class Log {
       case 'console':
       default:
         console.log(
-          `[${new Date().toISOString().slice(0, 10)}]`,
+          `[${timestamp()}]`,
           type,
           this.name,
           JSON.stringify(logEntry, null, 2),
