@@ -28,13 +28,41 @@ export async function cli(args) {
 
     case 'list':
     case 'ls':
-      return Services.getAllServices()
-        .map(service => {
-          return `[ ${service.online ? 'v' : '!'} ] ${service.id} -- ${service.type} -- ${service.ports.join(', ')} -- ${service.repository} ${service.branch} -- ${service.domains.map(x => `https://${x}`).join(', ')}`;
-        })
-        .join('\n');
+      const field = args[0];
+      const services = Services.getAllServices()
+        .map(service => ({
+          id: service.id,
+          type: service.type,
+          online: `[ ${service.online ? 'v' : '!'} ]`,
+          origin: service.repository + ' ' + service.branch,
+          ports: service.ports.join(','),
+          domains: service.domains.map(x => `https://${x}`).join(', '),
+        }));
+
+      if (field) {
+        return services.map(service => service[field]).join('\n');
+      }
+
+      return formatList(
+        [['Status', 'Id', 'Type', 'Ports', 'Origin', 'Domains'], Array(6).fill('')].concat(
+          services.map(_ => [_.online, _.id, _.type, _.ports, _.origin, _.domains])
+        )
+      );
 
     default:
       throw new Error('Invalid command!');
   }
+}
+
+function formatList(rows) {
+  const sizes = {};
+  const spaces = (size) => Array(size).fill(' ').join('');
+  const rightPad = (string, size) => string.length < size ? string + spaces(size - string.length) : string;
+
+  rows.forEach(row =>  {
+    row.forEach((column, index) => sizes[index] = Math.max(sizes[index]|0, column.length));
+  });
+
+  const formattedList = rows.map(row => row.map((column, index) => rightPad(column, sizes[index])).join(' | ') );
+  return formattedList.join('\n');
 }
