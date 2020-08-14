@@ -7,6 +7,11 @@ export async function cli(args) {
     case 'build':
       return await Services.createServiceFromRepository(...args);
 
+    case 'reboot':
+      Services.getAllServices().map(async (service) =>
+        await Services.createServiceFromRepository(service.repository, service.branch));
+      break;
+
     case 'build-local':
       return await Services.buildServiceFromStoredSettings(...args);
 
@@ -59,10 +64,10 @@ function formatList(rows) {
   const spaces = (size) => Array(size).fill(' ').join('');
   const rightPad = (string, size) => string.length < size ? string + spaces(size - string.length) : string;
 
-  rows.forEach(row =>  {
-    row.forEach((column, index) => sizes[index] = Math.max(sizes[index]|0, column.length));
+  rows.forEach(row => {
+    row.forEach((column, index) => sizes[index] = Math.max(sizes[index] | 0, column.length));
   });
 
-  const formattedList = rows.map(row => row.map((column, index) => rightPad(column, sizes[index])).join(' | ') );
+  const formattedList = rows.map(row => row.map((column, index) => rightPad(column, sizes[index])).join(' | '));
   return formattedList.join('\n');
 }

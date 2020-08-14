@@ -19,7 +19,7 @@ class ServiceManager {
   getAllServices() {
     const allServices = this.services.getAll();
     const runningServices = Docker.getRunningContainers();
-    const status = allServices.reduce((map, service) => (map[service.id] = {...service, online: false}, map), {});
+    const status = allServices.reduce((map, service) => (map[service.id] = { ...service, online: false }, map), {});
 
     runningServices
       .filter(name => !!status[name])
@@ -150,7 +150,7 @@ class ServiceManager {
     const serviceId = this.getServiceId(service.repository, service.head);
     const serviceType = this.getServiceType(service);
     const httpPort = this.getRandomPort();
-    const domains = [service.domain, serviceId.slice(0, 7) + '.' + cloudyDomain].filter(Boolean);
+    const domains = [service.domain || serviceId.slice(0, 7) + '.' + cloudyDomain];
     const hasWebSocket = !!service.webSocket && service.webSocket.path;
     const webSocket = hasWebSocket ? { path: service.webSocket.path } : null;
     const ports = [httpPort];
