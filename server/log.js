@@ -1,6 +1,4 @@
-import { request } from 'http';
-
-const toJson = (x) => JSON.stringify(x);
+const toJson = (x, oneLine = false) => JSON.stringify(x, null, oneLine ? 0 : 2);
 const logOutput = process.env.LOG_OUTPUT || 'console';
 
 export const serializeError = (error) => (error && error instanceof Error) ? error.stack : String(error);
@@ -59,10 +57,10 @@ export class Log {
       case 'console':
       default:
         console.log(
-          `[${timestamp()}]`,
-          type,
+          `[${type}]`,
+          timestamp(),
           this.name,
-          JSON.stringify(logEntry, null, 2),
+          toJson(logEntry.content.message || logEntry.content, true),
         );
     }
   }

@@ -115,7 +115,7 @@ class ServiceManager {
     const serviceKeyId = sha256(repository);
 
     if (!this.serviceKeys.has(serviceKeyId)) {
-      throw new Error(`Service for ${repository} not registered`);
+      await this.createServiceKey(repository);
     }
 
     const service = await Github.getServiceFromRepository(repository, head);
