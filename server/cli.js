@@ -2,14 +2,24 @@ import { Services } from './services.js';
 
 export async function cli(args) {
   const command = args.shift();
+  let services;
 
   switch (command) {
     case 'build':
       return await Services.createServiceFromRepository(...args);
 
     case 'reboot':
-      Services.getAllServices().map(async (service) =>
-        await Services.createServiceFromRepository(service.repository, service.branch));
+      services = Services.getAllServices();
+      for (const service of services) {
+        await Services.createServiceFromRepository(service.repository, service.branch);
+      }
+      break;
+
+    case 'reload':
+      services = Services.getAllServices();
+      for (const service of services) {
+        Services.restartService(service.repository, service.branch);
+      }
       break;
 
     case 'build-local':
@@ -34,7 +44,7 @@ export async function cli(args) {
     case 'list':
     case 'ls':
       const field = args[0];
-      const services = Services.getAllServices()
+      services = Services.getAllServices()
         .map(service => ({
           id: service.id,
           type: service.type,

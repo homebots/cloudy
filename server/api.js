@@ -2,14 +2,14 @@ import { Get, Post, Http } from './http.js';
 import { readFile } from './io.js';
 import { Services } from './services.js';
 import { Server } from './server.js';
-import { Github } from './github.js';
+import { GitHub } from './github.js';
 
 export async function api() {
   const httpSecret = await readFile('.key');
 
   Http.when(Get, '/services', (_, response) => response.send(Services.getAllServices()));
   Http.when(Post, '/deploy', async (request, response) => {
-    const service = Github.getServiceFromWebhook(request.body);
+    const service = GitHub.getServiceFromWebhook(request.body);
     const serviceKey = Services.getServiceKey(service.repository);
 
     if (!Http.checkProtectedRoute(request, serviceKey)) {

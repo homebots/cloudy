@@ -1,9 +1,10 @@
 import { Shell } from './shell.js';
 import { Log } from './log.js';
+import { GitHub } from './github.js';
 import { join, readDirectory } from './io.js';
 
 const logger = Log.create('docker');
-const prefixArgs =  (prefix, args) => args.map(arg => `${prefix} ${arg}`);
+const prefixArgs = (prefix, args) => args.map(arg => `${prefix} ${arg}`);
 const getBuildArgs = (args = []) => prefixArgs('--build-arg', ['CACHEBUSTER=' + new Date().getTime(), ...args]);
 const getDockerTag = (service) => 'cloudy/' + service.id;
 const getContainerPort = (host, container) => `127.0.0.1:${Number(host)}:${Number(container)}`;
@@ -28,8 +29,10 @@ class DockerManager {
   }
 
   createImage(service) {
+    const cloneUrl = GitHub.getCloneUrl(service.repository);
+
     try {
-      const buildArgs = getBuildArgs(['GIT_URL=' + service.cloneUrl]);
+      const buildArgs = getBuildArgs(['GIT_URL=' + cloneUrl, 'GIT_BRANCH=' + service.branch]);
       const folder = pathByType[service.type];
 
       if (!folder) {
@@ -38,7 +41,7 @@ class DockerManager {
 
       Shell.execAndLog('docker', ['build', '-q', ...buildArgs, '-t', getDockerTag(service), folder]);
     } catch (error) {
-      throw new Error('Failed to create image for ' + service.cloneUrl + ':\n' + error.message);
+      throw new Error('Failed to create image for ' + cloneUrl + ':\n' + error.message);
     }
   }
 

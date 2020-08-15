@@ -38,7 +38,6 @@ class GithubApi {
       repository,
       head,
       url: this.getRepositoryUrl(repository),
-      cloneUrl: this.getCloneUrl(repository),
       configurationUrl: this.getServiceJsonUrl(repository, head),
     }
   }
@@ -75,4 +74,4 @@ class GithubApi {
   }
 }
 
-export const Github = new GithubApi();
+export const GitHub = new GithubApi();

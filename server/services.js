@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { Docker } from './docker.js';
-import { Github } from './github.js';
+import { GitHub } from './github.js';
 import { FileStorage } from './storage.js';
 import { Log } from './log.js';
 import { Nginx } from './nginx.js';
@@ -30,7 +30,7 @@ class ServiceManager {
 
   async deployService(service) {
     try {
-      const configuration = await Github.fetchServiceConfiguration(service.configurationUrl);
+      const configuration = await GitHub.fetchServiceConfiguration(service.configurationUrl);
       const cloudyServiceConfig = this.createServiceConfiguration({
         ...service,
         ...configuration,
@@ -88,12 +88,18 @@ class ServiceManager {
     Docker.runService(serviceConfiguration);
   }
 
+  restartService(repository, head = 'master') {
+    const serviceConfiguration = this.getServiceConfiguration(repository, head);
+    Docker.stopService(serviceConfiguration);
+    Docker.runService(serviceConfiguration);
+  }
+
   async createServiceKey(repository) {
     if (!repository) {
       throw new Error('Invalid repository');
     }
 
-    const repositoryExists = await Github.exists(repository);
+    const repositoryExists = await GitHub.exists(repository);
     if (!repositoryExists) {
       throw new Error('Repository not found');
     }
@@ -118,7 +124,7 @@ class ServiceManager {
       await this.createServiceKey(repository);
     }
 
-    const service = await Github.getServiceFromRepository(repository, head);
+    const service = await GitHub.getServiceFromRepository(repository, head);
     return this.deployService(service);
   }
 
@@ -168,7 +174,6 @@ class ServiceManager {
       id: serviceId,
       type: serviceType,
       url: service.url,
-      cloneUrl: service.cloneUrl,
       branch: service.head,
       repository: service.repository,
       webSocket,

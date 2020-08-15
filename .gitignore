@@ -4,3 +4,4 @@ node_modules
 nginx-sites/*
 data/*
 storage/*
+logs/*

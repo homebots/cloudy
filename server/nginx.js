@@ -7,6 +7,7 @@ const logger = Log.create('nginx');
 class NginxManager {
   async createServiceConfig(service) {
     const vars = {
+      id: service.id.slice(0, 7),
       port: service.env.PORT,
       webSocketPort: service.env.WEBSOCKET_PORT,
       domains: service.domains.join(' '),
@@ -49,7 +50,7 @@ class NginxManager {
       return '';
     }
 
-    return  `
+    return `
     location /${service.webSocket.path} {
       proxy_set_header Host $http_host;
       ${isSecure ? 'proxy_ssl_server_name on;' : ''}

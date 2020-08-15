@@ -98,3 +98,17 @@ Go to the `Repository Settings > Webhooks` and add a new webhook (https://github
 - Secret: `4de1f5aab51b969dace864d506ad88cd1bd4c5c710b6145ff2e196012f3d292f` (from previous step)
 
 And done! Now every commit will redeploy that repo in a Docker Container!
+
+# Service Object
+
+```
+id:             string,
+type:           'node' | 'nginx'
+url:            'https://github.com/org/repo',
+branch:         "master",
+repository:     'org/repo',
+webSocket:       { }
+domains:        string[],
+ports:          number[]
+env:            { "KEY": "value" },
+```
