@@ -38,7 +38,7 @@ class ServiceManager {
 
       setTimeout(async () => {
         this.services.set(cloudyServiceConfig.id, cloudyServiceConfig);
-        this.buildServiceFromConfiguration(cloudyServiceConfig);
+        await this.buildServiceFromConfiguration(cloudyServiceConfig);
       }, 10);
 
       return cloudyServiceConfig.id;
@@ -67,9 +67,9 @@ class ServiceManager {
   async buildServiceFromConfiguration(cloudyServiceConfig) {
     try {
       this.building = true;
-      Docker.createImage(cloudyServiceConfig);
-      Docker.stopService(cloudyServiceConfig);
-      Docker.runService(cloudyServiceConfig);
+      await Docker.createImage(cloudyServiceConfig);
+      await Docker.stopService(cloudyServiceConfig);
+      await Docker.runService(cloudyServiceConfig);
       await Nginx.createServiceConfig(cloudyServiceConfig);
       Nginx.reload();
     } catch (error) {

@@ -28,7 +28,7 @@ class DockerManager {
     return Shell.exec('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n');
   }
 
-  createImage(service) {
+  async createImage(service) {
     const cloneUrl = GitHub.getCloneUrl(service.repository);
 
     try {
@@ -39,13 +39,14 @@ class DockerManager {
         throw new Error(`Invalid service type: ${service.type}`);
       }
 
-      Shell.execAndLog('docker', ['build', '-q', ...buildArgs, '-t', getDockerTag(service), folder]);
+      return Shell.execAndLog('docker', ['build', '--quiet', ...buildArgs, '-t', getDockerTag(service), folder]);
     } catch (error) {
+      logger.error(error);
       throw new Error('Failed to create image for ' + cloneUrl + ':\n' + error.message);
     }
   }
 
-  runService(service) {
+  async runService(service) {
     const volumes = [
       join('data', service.id) + ':' + dataDir,
     ];
