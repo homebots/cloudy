@@ -68,6 +68,9 @@ class DockerManager {
       args.push(`'${variablePair.join('=').replace(/'/g, '')}'`);
     });
 
+    const maxMemory = process.env.CLOUDY_MAX_MEMORY || '32mb';
+    args.push(`--memory=${maxMemory}`, '--cpus=1');
+
     Shell.execAndLog('docker', ['run', '--rm', '-d', ...args, getDockerTag(service)]);
   }
 
