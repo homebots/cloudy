@@ -1,4 +1,5 @@
 import { Services } from './services.js';
+import { Server } from './server.js';
 
 export async function cli(args) {
   const command = args.shift();
@@ -26,12 +27,17 @@ export async function cli(args) {
       return await Services.buildServiceFromStoredSettings(...args);
 
     case 'create':
-      return await Services.createServiceKey(...args);
+      await Services.createServiceKey(...args);
+      Server.reload();
+      break;
 
     case 'stop':
       return await Services.stopService(...args);
 
     case 'start':
+      return await Services.startService(...args);
+
+    case 'restart':
       return await Services.startService(...args);
 
     case 'del':
