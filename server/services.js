@@ -19,13 +19,10 @@ class ServiceManager {
   getAllServices() {
     const allServices = this.services.getAll();
     const runningServices = Docker.getRunningContainers();
-    const status = allServices.reduce((map, service) => (map[service.id] = { ...service, online: false }, map), {});
+    const isOnline = (service) => runningServices.includes(Docker.getContainerNameForService(service));
+    const status = allServices.map((service) => ({ ...service, online: isOnline(service) }));
 
-    runningServices
-      .filter(name => !!status[name])
-      .forEach(name => (status[name].online = true));
-
-    return Object.values(status);
+    return status;
   }
 
   async deployService(service) {

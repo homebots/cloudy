@@ -56,12 +56,12 @@ class DockerManager {
     const args = [
       ...prefixArgs('-p', ports),
       ...prefixArgs('-v', volumes),
-      '--name', service.id.slice(0, 7),
+      '--name', this.getContainerNameForService(service),
     ];
 
     const env = Object.entries(service.env).concat([
       ['DATA_DIR', dataDir],
-      ['GA_TRACKING_ID', process.env.GA_TRACKING_ID || ''],
+      ['GA_TRACKING_ID'],
     ]);
 
     env.forEach(variablePair => {
@@ -81,6 +81,10 @@ class DockerManager {
     if (runningContainers.includes(service.id)) {
       Shell.execAndLog('docker', ['stop', '--time', '2', service.id]);
     }
+  }
+
+  getContainerNameForService(service) {
+    return service.id.slice(0, 7)
   }
 }
 
