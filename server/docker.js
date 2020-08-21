@@ -61,6 +61,7 @@ class DockerManager {
 
     const env = Object.entries(service.env).concat([
       ['DATA_DIR', dataDir],
+      ['GA_TRACKING_ID', process.env.GA_TRACKING_ID || ''],
     ]);
 
     env.forEach(variablePair => {
