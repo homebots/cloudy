@@ -56,7 +56,7 @@ class DockerManager {
     const args = [
       ...prefixArgs('-p', ports),
       ...prefixArgs('-v', volumes),
-      '--name', service.id,
+      '--name', service.id.slice(0, 7),
     ];
 
     const env = Object.entries(service.env).concat([

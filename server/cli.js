@@ -58,6 +58,7 @@ export async function cli(args) {
           origin: service.repository + ' ' + service.branch,
           ports: service.ports.join(','),
           domains: service.domains.map(x => `https://${x}`).join(', '),
+          key: Services.getServiceKey(service.repository),
         }));
 
       if (field) {
@@ -65,8 +66,8 @@ export async function cli(args) {
       }
 
       return formatList(
-        [['Status', 'Id', 'Type', 'Ports', 'Origin', 'Domains'], Array(6).fill('')].concat(
-          services.map(_ => [_.online, _.id, _.type, _.ports, _.origin, _.domains])
+        [['Status', 'Id', 'Type', 'Ports', 'Origin', 'Domains', 'Key'], Array(6).fill('')].concat(
+          services.map(_ => [_.online, _.id, _.type, _.ports, _.origin, _.domains, _.key])
         )
       );
 
