@@ -44,8 +44,10 @@ export async function cli(args) {
     case 'delete':
       return await Services.deleteService(...args);
 
-    case 'getkey':
+    case 'get-key':
       return await Services.getServiceKey(...args);
+    case 'delete-key':
+      return await Services.deleteServiceKey(...args);
 
     case 'list':
     case 'ls':
@@ -82,9 +84,9 @@ function formatList(rows) {
   const rightPad = (string, size) => string.length < size ? string + spaces(size - string.length) : string;
 
   rows.forEach(row => {
-    row.forEach((column, index) => sizes[index] = Math.max(sizes[index] | 0, column.length));
+    row.forEach((column, index) => sizes[index] = Math.max(sizes[index] | 0, String(column).length));
   });
 
-  const formattedList = rows.map(row => row.map((column, index) => rightPad(column, sizes[index])).join(' | '));
+  const formattedList = rows.map(row => row.map((column, index) => rightPad(String(column), sizes[index])).join(' | '));
   return formattedList.join('\n');
 }

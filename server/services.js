@@ -152,6 +152,11 @@ class ServiceManager {
     return this.serviceKeys.get(serviceId);
   }
 
+  deleteServiceKey(repository) {
+    const serviceId = sha256(repository);
+    return this.serviceKeys.delete(serviceId);
+  }
+
   createServiceConfiguration(service) {
     const serviceId = this.getServiceId(service.repository, service.head);
     const serviceType = this.getServiceType(service);
