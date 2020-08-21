@@ -77,9 +77,12 @@ class DockerManager {
 
   async stopService(service) {
     const runningContainers = this.getRunningContainers();
+    const name = this.getContainerNameForService(service);
 
-    if (runningContainers.includes(service.id)) {
-      Shell.execAndLog('docker', ['stop', '--time', '2', service.id]);
+    if (runningContainers.includes(name)) {
+      Shell.execAndLog('docker', ['stop', '--time', '2', name]);
+    } else {
+      Shell.execAndLog('docker', ['rm', name]);
     }
   }
 

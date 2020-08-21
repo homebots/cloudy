@@ -23,9 +23,6 @@ export async function cli(args) {
       }
       break;
 
-    case 'build-local':
-      return await Services.buildServiceFromStoredSettings(...args);
-
     case 'create':
       await Services.createServiceKey(...args);
       Server.reload();
@@ -38,7 +35,7 @@ export async function cli(args) {
       return await Services.startService(...args);
 
     case 'restart':
-      return await Services.startService(...args);
+      return await Services.restartService(...args);
 
     case 'del':
     case 'delete':
@@ -46,6 +43,7 @@ export async function cli(args) {
 
     case 'get-key':
       return await Services.getServiceKey(...args);
+
     case 'delete-key':
       return await Services.deleteServiceKey(...args);
 

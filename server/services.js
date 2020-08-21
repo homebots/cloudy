@@ -51,16 +51,6 @@ class ServiceManager {
     return this.services.get(serviceId);
   }
 
-  async buildServiceFromStoredSettings(repository, head = 'master') {
-    const serviceConfiguration = this.getServiceConfiguration(repository, head);
-
-    if (!serviceConfiguration) {
-      throw new Error(`Local service configuration for ${repository}:${head} not found!`);
-    }
-
-    return await this.buildServiceFromConfiguration(serviceConfiguration);
-  }
-
   async buildServiceFromConfiguration(cloudyServiceConfig) {
     try {
       this.building = true;
