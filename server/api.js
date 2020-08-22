@@ -41,7 +41,7 @@ export async function api() {
 
     setTimeout(() => {
       Server.updateRepository();
-      Server.reload();
+      Server.reloadAfterBuild();
     }, 10);
   });
 

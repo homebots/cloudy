@@ -13,10 +13,14 @@ class ServerManager {
     }
   }
 
-  reload() {
-    const exit = () => (Services.building || Shell.exec('pm2', ['reload', 'cloudy']));
+  reloadAfterBuild() {
+    const exit = () => Services.building || this.reload();
     exit();
     setInterval(exit, 1000);
+  }
+
+  reload() {
+    Shell.exec('pm2', ['reload', 'cloudy']);
   }
 }
 
