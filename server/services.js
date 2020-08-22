@@ -57,12 +57,20 @@ class ServiceManager {
       await Docker.createImage(cloudyServiceConfig);
       await Docker.stopService(cloudyServiceConfig);
       await Docker.runService(cloudyServiceConfig);
-      await Nginx.createServiceConfig(cloudyServiceConfig);
+      await Nginx.createServiceConfiguration(cloudyServiceConfig);
       Nginx.reload();
     } catch (error) {
       this.building = false;
       throw error;
     }
+  }
+
+  async reconfigureNginx() {
+    const allServices = this.services.getAll();
+
+    Nginx.resetConfiguration();
+    await Promise.all(allServices.map((service) => Nginx.createServiceConfiguration(service)));
+    Nginx.reload();
   }
 
   stopService(repository, head = 'master') {
@@ -176,7 +184,9 @@ class ServiceManager {
   }
 
   getServiceType(service) {
-    return service.type && Docker.availableServiceTypes.includes(service.type) ? service.type : Docker.defaultServiceType;
+    return service.type && Docker.availableServiceTypes.includes(service.type)
+      ? service.type
+      : Docker.defaultServiceType;
   }
 
   getRandomPort() {
@@ -184,7 +194,7 @@ class ServiceManager {
     const portsInUse = this.getAllServices().reduce((ports, service) => ports.concat(service.ports), []);
     let port;
 
-    while (port = newRandomPort()) {
+    while ((port = newRandomPort())) {
       if (portsInUse.includes(port) === false) {
         return port;
       }

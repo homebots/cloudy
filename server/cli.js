@@ -12,7 +12,7 @@ export async function cli(args) {
       Server.reload();
       break;
 
-    case 'reboot':
+    case 'build-all':
       services = Services.getAllServices();
       for (const service of services) {
         await Services.createServiceFromRepository(service.repository, service.branch);
@@ -20,11 +20,15 @@ export async function cli(args) {
       Server.reload();
       break;
 
-    case 'reload':
+    case 'deploy-all':
       services = Services.getAllServices();
       for (const service of services) {
         Services.restartService(service.repository, service.branch);
       }
+      break;
+
+    case 'update-nginx':
+      await Services.reconfigureNginx();
       break;
 
     case 'create':
@@ -61,25 +65,24 @@ export async function cli(args) {
     case 'list':
     case 'ls':
       const field = args[0];
-      services = Services.getAllServices()
-        .map(service => ({
-          id: `${service.id} ${Docker.getContainerNameForService(service)}`,
-          type: service.type,
-          online: `[${service.online ? 'v' : '!'}]`,
-          origin: service.repository + ' ' + service.branch,
-          ports: service.ports.join(','),
-          domains: service.domains.map(x => `https://${x}`).join(', '),
-          key: Services.getServiceKey(service.repository),
-        }));
+      services = Services.getAllServices().map((service) => ({
+        id: `${service.id} ${Docker.getContainerNameForService(service)}`,
+        type: service.type,
+        online: `[${service.online ? 'v' : '!'}]`,
+        origin: service.repository + ' ' + service.branch,
+        ports: service.ports.join(','),
+        domains: service.domains.map((x) => `https://${x}`).join(', '),
+        key: Services.getServiceKey(service.repository),
+      }));
 
       if (field) {
-        return services.map(service => service[field]).join('\n');
+        return services.map((service) => service[field]).join('\n');
       }
 
       return formatList(
         [['---', 'Id/Container', 'Type', 'Ports', 'Origin', 'Domains', 'Key'], Array(6).fill('')].concat(
-          services.map(_ => [_.online, _.id, _.type, _.ports, _.origin, _.domains, _.key])
-        )
+          services.map((_) => [_.online, _.id, _.type, _.ports, _.origin, _.domains, _.key]),
+        ),
       );
 
     default:
@@ -90,12 +93,14 @@ export async function cli(args) {
 function formatList(rows) {
   const sizes = {};
   const spaces = (size) => Array(size).fill(' ').join('');
-  const rightPad = (string, size) => string.length < size ? string + spaces(size - string.length) : string;
+  const rightPad = (string, size) => (string.length < size ? string + spaces(size - string.length) : string);
 
-  rows.forEach(row => {
-    row.forEach((column, index) => sizes[index] = Math.max(sizes[index] | 0, String(column).length));
+  rows.forEach((row) => {
+    row.forEach((column, index) => (sizes[index] = Math.max(sizes[index] | 0, String(column).length)));
   });
 
-  const formattedList = rows.map(row => row.map((column, index) => rightPad(String(column), sizes[index])).join(' | '));
+  const formattedList = rows.map((row) =>
+    row.map((column, index) => rightPad(String(column), sizes[index])).join(' | '),
+  );
   return formattedList.join('\n');
 }

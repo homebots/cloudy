@@ -2,10 +2,10 @@ import { Shell } from './shell.js';
 import { readFile, writeFile, deleteFile, exists } from './io.js';
 import { Log } from './log.js';
 
-const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => (vars[variable] || ''));
+const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable] || '');
 const logger = Log.create('nginx');
 class NginxManager {
-  async createServiceConfig(service) {
+  async createServiceConfiguration(service) {
     const vars = {
       id: service.id.slice(0, 7),
       port: service.env.PORT,
@@ -22,9 +22,15 @@ class NginxManager {
     try {
       await writeFile(`nginx-sites/${service.id}.conf`, content);
     } catch (error) {
-      logger.error('Failed to create Nginx configuration!')
+      logger.error('Failed to create Nginx configuration!');
       logger.debug(error);
     }
+  }
+
+  async resetConfiguration() {
+    try {
+      Shell.exec('rm', ['nginx-sites/*']);
+    } catch {}
   }
 
   async deleteServiceConfig(service) {
@@ -40,7 +46,7 @@ class NginxManager {
       Shell.exec('nginx', ['-t']);
       Shell.exec('service', ['nginx', 'reload']);
     } catch (error) {
-      logger.error('Failed to reload Nginx configuration!')
+      logger.error('Failed to reload Nginx configuration!');
       logger.debug(error);
     }
   }
