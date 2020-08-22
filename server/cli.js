@@ -1,5 +1,6 @@
 import { Services } from './services.js';
 import { Server } from './server.js';
+import { Docker } from './docker.js';
 
 export async function cli(args) {
   const command = args.shift();
@@ -7,13 +8,16 @@ export async function cli(args) {
 
   switch (command) {
     case 'build':
-      return await Services.createServiceFromRepository(...args);
+      await Services.createServiceFromRepository(...args);
+      Server.reload();
+      break;
 
     case 'reboot':
       services = Services.getAllServices();
       for (const service of services) {
         await Services.createServiceFromRepository(service.repository, service.branch);
       }
+      Server.reload();
       break;
 
     case 'reload':
@@ -29,32 +33,39 @@ export async function cli(args) {
       break;
 
     case 'stop':
-      return await Services.stopService(...args);
+      await Services.stopService(...args);
+      break;
 
     case 'start':
-      return await Services.startService(...args);
+      await Services.startService(...args);
+      break;
 
     case 'restart':
-      return await Services.restartService(...args);
+      await Services.restartService(...args);
+      break;
 
     case 'del':
     case 'delete':
-      return await Services.deleteService(...args);
+      await Services.deleteService(...args);
+      Server.reload();
+      break;
 
     case 'get-key':
-      return await Services.getServiceKey(...args);
+      await Services.getServiceKey(...args);
+      break;
 
     case 'delete-key':
-      return await Services.deleteServiceKey(...args);
+      await Services.deleteServiceKey(...args);
+      break;
 
     case 'list':
     case 'ls':
       const field = args[0];
       services = Services.getAllServices()
         .map(service => ({
-          id: service.id,
+          id: `${service.id} ${Docker.getContainerNameForService(service)}`,
           type: service.type,
-          online: `[ ${service.online ? 'v' : '!'} ]`,
+          online: `[${service.online ? 'v' : '!'}]`,
           origin: service.repository + ' ' + service.branch,
           ports: service.ports.join(','),
           domains: service.domains.map(x => `https://${x}`).join(', '),
@@ -66,7 +77,7 @@ export async function cli(args) {
       }
 
       return formatList(
-        [['Status', 'Id', 'Type', 'Ports', 'Origin', 'Domains', 'Key'], Array(6).fill('')].concat(
+        [['---', 'Id/Container', 'Type', 'Ports', 'Origin', 'Domains', 'Key'], Array(6).fill('')].concat(
           services.map(_ => [_.online, _.id, _.type, _.ports, _.origin, _.domains, _.key])
         )
       );
