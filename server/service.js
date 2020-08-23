@@ -166,7 +166,7 @@ class ServiceManager {
       PORT: containerPort,
     };
 
-    const ports = [[hostPort, containerPort]];
+    const ports = [hostPort !== containerPort ? [hostPort, containerPort] : hostPort];
     if (hasWebSocket) {
       env.WEBSOCKET_PORT = this.getRandomPort();
       ports.push(env.WEBSOCKET_PORT);

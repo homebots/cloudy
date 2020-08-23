@@ -48,7 +48,7 @@ class DockerManager {
   async runService(service) {
     const volumes = [join('data', service.id) + ':' + dataDir];
 
-    const ports = service.ports.map((port) => getContainerPort(port));
+    const ports = service.ports.map((port) => this.getContainerPort(port));
 
     const args = [
       ...prefixArgs('-p', ports),
@@ -77,7 +77,7 @@ class DockerManager {
     if (runningContainers.includes(name)) {
       Shell.execAndLog('docker', ['stop', '--time', '2', name]);
     } else {
-      Shell.execAndLog('docker', ['rm', name]);
+      Shell.execAndLog('docker', ['rm', name], true);
     }
   }
 
