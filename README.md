@@ -43,6 +43,9 @@ NOTE: They are all **optional**
   // e.g. bc5a6b6.your-domain.com
   "domain": "abc.example.com",
 
+  // container's http port. Defaults to a random port available at $PORT env variables
+  "port": 80,
+
   // any env variables you need to set
   "env": {
     "FOO": "foo",
@@ -109,6 +112,7 @@ branch:         "master",
 repository:     'org/repo',
 webSocket:       { }
 domains:        string[],
-ports:          number[]
+ports:          number[] | [number, number][]
 env:            { "KEY": "value" },
+memory:         50mb
 ```

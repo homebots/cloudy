@@ -1,4 +1,4 @@
-import { Services } from './services.js';
+import { Services } from './service.js';
 import { Server } from './server.js';
 import { Docker } from './docker.js';
 

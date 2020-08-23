@@ -1,6 +1,6 @@
 import { Get, Post, Http } from './http.js';
 import { readFile } from './io.js';
-import { Services } from './services.js';
+import { Services } from './service.js';
 import { Server } from './server.js';
 import { GitHub } from './github.js';
 

@@ -155,16 +155,18 @@ class ServiceManager {
   createServiceConfiguration(service) {
     const serviceId = this.getServiceId(service.repository, service.head);
     const serviceType = this.getServiceType(service);
-    const httpPort = this.getRandomPort();
+    const hostPort = this.getRandomPort();
+    const containerPort = Number(service.port) || hostPort;
     const domains = [service.domain || serviceId.slice(0, 7) + '.' + cloudyDomain];
     const hasWebSocket = !!service.webSocket && service.webSocket.path;
     const webSocket = hasWebSocket ? { path: service.webSocket.path } : null;
-    const ports = [httpPort];
+
     const env = {
       ...(service.env || {}),
-      PORT: httpPort,
+      PORT: containerPort,
     };
 
+    const ports = [[hostPort, containerPort]];
     if (hasWebSocket) {
       env.WEBSOCKET_PORT = this.getRandomPort();
       ports.push(env.WEBSOCKET_PORT);
@@ -180,6 +182,7 @@ class ServiceManager {
       domains,
       ports,
       env,
+      memory: service.memory,
     };
   }
 

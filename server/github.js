@@ -3,7 +3,7 @@ import { Log } from './log.js';
 
 const logger = Log.create('github');
 
-class GithubApi {
+class GithubService {
   getServiceJsonUrl(repository, head) {
     return `https://raw.githubusercontent.com/${repository}/${head}/service.json`;
   }
@@ -39,7 +39,7 @@ class GithubApi {
       head,
       url: this.getRepositoryUrl(repository),
       configurationUrl: this.getServiceJsonUrl(repository, head),
-    }
+    };
   }
 
   async exists(repository) {
@@ -52,14 +52,14 @@ class GithubApi {
   async fetchServiceConfiguration(configurationUrl) {
     const headers = {
       'user-agent': 'homebots/cloudy',
-      'pragma': 'no-cache',
+      pragma: 'no-cache',
       'cache-control': 'no-cache',
     };
 
     const requestOptions = {
-      auth: '86869c12a694a6a6f660:590386f1067213fb177ed690b961471e5c7082f3',
+      auth: process.env.CLOUDY_GITHUB_HTTP_AUTH,
       headers,
-    }
+    };
 
     try {
       const configJson = await Http.fetch(configurationUrl, requestOptions);
@@ -74,4 +74,4 @@ class GithubApi {
   }
 }
 
-export const GitHub = new GithubApi();
+export const GitHub = new GithubService();

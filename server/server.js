@@ -1,6 +1,6 @@
 import { Log } from './log.js';
 import { Shell } from './shell.js';
-import { Services } from './services.js';
+import { Services } from './service.js';
 
 const logger = Log.create('server');
 

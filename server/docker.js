@@ -4,10 +4,9 @@ import { GitHub } from './github.js';
 import { join, readDirectory } from './io.js';
 
 const logger = Log.create('docker');
-const prefixArgs = (prefix, args) => args.map(arg => `${prefix} ${arg}`);
+const prefixArgs = (prefix, args) => args.map((arg) => `${prefix} ${arg}`);
 const getBuildArgs = (args = []) => prefixArgs('--build-arg', ['CACHEBUSTER=' + new Date().getTime(), ...args]);
 const getDockerTag = (service) => 'cloudy/' + service.id;
-const getContainerPort = (host, container) => `127.0.0.1:${Number(host)}:${Number(container)}`;
 const pathByType = {};
 const dataDir = '/opt/data';
 
@@ -21,7 +20,7 @@ class DockerManager {
     this.availableServiceTypes = images;
     this.defaultServiceType = 'node';
 
-    images.forEach(image => pathByType[image] = join('images', image));
+    images.forEach((image) => (pathByType[image] = join('images', image)));
   }
 
   getRunningContainers() {
@@ -47,24 +46,20 @@ class DockerManager {
   }
 
   async runService(service) {
-    const volumes = [
-      join('data', service.id) + ':' + dataDir,
-    ];
+    const volumes = [join('data', service.id) + ':' + dataDir];
 
-    const ports = service.ports.map(port => getContainerPort(port, port));
+    const ports = service.ports.map((port) => getContainerPort(port));
 
     const args = [
       ...prefixArgs('-p', ports),
       ...prefixArgs('-v', volumes),
-      '--name', this.getContainerNameForService(service),
+      '--name',
+      this.getContainerNameForService(service),
     ];
 
-    const env = Object.entries(service.env).concat([
-      ['DATA_DIR', dataDir],
-      ['GA_TRACKING_ID'],
-    ]);
+    const env = Object.entries(service.env).concat([['DATA_DIR', dataDir], ['GA_TRACKING_ID']]);
 
-    env.forEach(variablePair => {
+    env.forEach((variablePair) => {
       args.push('-e');
       args.push(`'${variablePair.join('=').replace(/'/g, '')}'`);
     });
@@ -87,7 +82,16 @@ class DockerManager {
   }
 
   getContainerNameForService(service) {
-    return service.id.slice(0, 7)
+    return service.id.slice(0, 7);
+  }
+
+  getContainerPort(port) {
+    if (typeof port === 'number') {
+      return `127.0.0.1:${port}:${port}`;
+    }
+
+    const [host, container] = port;
+    return `127.0.0.1:${host}:${container}`;
   }
 }
 
