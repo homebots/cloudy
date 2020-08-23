@@ -101,7 +101,7 @@ class ServiceManager {
 
     const serviceKeyExists = this.getServiceKey(repository);
     if (serviceKeyExists) {
-      throw new Error('Service already exists');
+      throw new Error('Service already exists, key is ' + serviceKeyExists);
     }
 
     const serviceKeyId = sha256(repository);

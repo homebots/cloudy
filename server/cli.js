@@ -32,9 +32,9 @@ export async function cli(args) {
       break;
 
     case 'create':
-      await Services.createServiceKey(...args);
+      const key = await Services.createServiceKey(...args);
       Server.reload();
-      break;
+      return key;
 
     case 'stop':
       await Services.stopService(...args);
@@ -55,8 +55,7 @@ export async function cli(args) {
       break;
 
     case 'get-key':
-      await Services.getServiceKey(...args);
-      break;
+      return await Services.getServiceKey(...args);
 
     case 'delete-key':
       await Services.deleteServiceKey(...args);
