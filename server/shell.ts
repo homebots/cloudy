@@ -1,19 +1,19 @@
-import { spawnSync } from 'child_process';
+import { spawnSync, SpawnSyncOptions } from 'child_process';
 import { Log } from './log.js';
 
-const shOptions = { stdio: 'pipe', shell: true };
+const shOptions: SpawnSyncOptions = { stdio: 'pipe', shell: true };
 const logger = Log.create('shell');
 
-const logPrefix = (string) =>
+const logPrefix = (string: string) =>
   string
     .trim()
     .split('\n')
     .filter(Boolean)
-    .map((line) => `>> ${line}`)
+    .map((line: any) => `>> ${line}`)
     .join('\n');
 
 export class Shell {
-  static execAndLog(command, args, ignoreError = false) {
+  static execAndLog(command: string, args: any[]) {
     logger.log(command + ' ' + args.join(' '));
 
     try {
@@ -25,19 +25,18 @@ export class Shell {
 
       return output;
     } catch (error) {
-      if (!ignoreError) {
-        logger.error(error);
-        throw error;
-      }
+      logger.error(error);
+      throw error;
     }
   }
 
-  static exec(command, args) {
+  static exec(command: string, args: readonly string[] | undefined) {
+    // return '';
     const commandOutput = spawnSync(command, args, shOptions);
 
     if (commandOutput.error || Number(commandOutput.status) !== 0) {
       throw new Error(
-        `Command ${command} failed with code ${commandOutput.status}:\n${commandOutput.stderr.toString()}`,
+        `Command "${command}" failed with code ${commandOutput.status}:\n${commandOutput.stderr.toString()}`,
       );
     }
 

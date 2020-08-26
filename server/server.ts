@@ -8,6 +8,7 @@ class ServerManager {
   updateRepository() {
     try {
       Shell.exec('git', ['pull', '--rebase']);
+      Shell.exec('npm', ['ci']);
     } catch (error) {
       logger.error(error.message);
     }

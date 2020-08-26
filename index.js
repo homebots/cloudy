@@ -1,5 +1,5 @@
-import { cli } from './server/cli.js';
-import { api } from './server/api.js';
+import { cli } from './build/cli.js';
+import { api } from './build/api.js';
 
 if (process.argv.length === 2) {
   api().catch(console.log);

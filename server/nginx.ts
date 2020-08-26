@@ -1,23 +1,15 @@
 import { Shell } from './shell.js';
 import { readFile, writeFile, deleteFile, exists } from './io.js';
 import { Log } from './log.js';
+import { ServiceConfiguration } from './models.js';
 
-const replaceVars = (text, vars) => text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable] || '');
 const logger = Log.create('nginx');
-class NginxManager {
-  async createServiceConfiguration(service) {
-    const vars = {
-      id: service.id.slice(0, 7),
-      port: service.env.PORT,
-      webSocketPort: service.env.WEBSOCKET_PORT,
-      domains: service.domains.join(' '),
-    };
+const replaceVars = (text: string, vars: any) =>
+  text.replace(/\{\{\s*(\w+)\s*}\}/g, (_, variable) => vars[variable] || '');
 
-    const template = await readFile('server', 'service.conf');
-    const templateWithWebSockets = template
-      .replace('%webSocket%', this.getWebSocketConfig(service))
-      .replace('%secureWebSocket%', this.getWebSocketConfig(service, true));
-    const content = replaceVars(templateWithWebSockets, vars);
+class NginxManager {
+  async registerService(service: ServiceConfiguration) {
+    const content = await this.createConfigurationForService(service);
 
     try {
       await writeFile(`nginx-sites/${service.id}.conf`, content);
@@ -27,13 +19,29 @@ class NginxManager {
     }
   }
 
-  async resetConfiguration() {
+  private async createConfigurationForService(service: ServiceConfiguration) {
+    const vars = {
+      id: service.name,
+      port: service.env.PORT,
+      webSocketPort: service.env.WEBSOCKET_PORT,
+      domains: service.domains.join(' '),
+    };
+
+    const template = await readFile('server', 'service.conf');
+    const templateWithWebSockets = template
+      .replace('%webSocket%', this.getWebSocketConfig(service))
+      .replace('%secureWebSocket%', this.getWebSocketConfig(service, true));
+
+    return replaceVars(templateWithWebSockets, vars);
+  }
+
+  async removeAllSites() {
     try {
       Shell.exec('rm', ['nginx-sites/*']);
     } catch {}
   }
 
-  async deleteServiceConfig(service) {
+  async unregisterService(service: ServiceConfiguration) {
     if (await exists('nginx-sites', `${service.id}.conf`)) {
       return await deleteFile('nginx-sites', `${service.id}.conf`);
     }
@@ -51,7 +59,7 @@ class NginxManager {
     }
   }
 
-  getWebSocketConfig(service, isSecure = false) {
+  private getWebSocketConfig(service: ServiceConfiguration, isSecure = false) {
     if (!service.webSocket) {
       return '';
     }
