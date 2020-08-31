@@ -46,9 +46,26 @@ class ServiceManager {
     return containers.includes(this.getContainerNameForService(service));
   }
 
-  async build(service: Service) {
+  async create(service: Service, configuration?: PublicServiceConfiguration) {
+    logger.debug('create', service);
+    const id = this.getServiceId(service);
+
+    if (this.services.has(id)) return;
+
+    const publicConfiguration = await this.resolveConfiguration(service, configuration);
+    const { repository, branch } = service;
+    const storedService: StoredService = {
+      repository,
+      branch,
+      type: publicConfiguration.type || this.defaultServiceType,
+    };
+
+    this.services.set(id, storedService);
+  }
+
+  async build(service: Service, configuration?: PublicServiceConfiguration) {
     logger.debug('build', service);
-    const publicConfiguration = await GitHub.fetchServiceConfiguration(service);
+    const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
     const serviceType = this.resolveServiceType(publicConfiguration.type);
     const image = this.getImageFromServiceType(serviceType);
@@ -65,9 +82,9 @@ class ServiceManager {
     });
   }
 
-  async runInBackground(service: Service) {
+  async runInBackground(service: Service, configuration?: PublicServiceConfiguration) {
     logger.debug('run in background', service);
-    const publicConfiguration = await GitHub.fetchServiceConfiguration(service);
+    const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
     const image = this.getImageFromServiceType(serviceConfiguration.type);
     const envVars = Object.assign({}, serviceConfiguration.env, {
@@ -93,9 +110,9 @@ class ServiceManager {
     Nginx.reload();
   }
 
-  async runAndExit(service: Service) {
+  async runAndExit(service: Service, configuration?: PublicServiceConfiguration) {
     logger.debug('run and exit', service);
-    const publicConfiguration = await GitHub.fetchServiceConfiguration(service);
+    const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const { type } = publicConfiguration;
     const serviceConfiguration = this.getServiceConfiguration({ ...service, type });
     const image = this.getImageFromServiceType(serviceConfiguration.type);
@@ -122,6 +139,10 @@ class ServiceManager {
   stop(service: Service) {
     logger.debug('stop', service);
     Docker.stopContainer(this.getContainerNameForService(service));
+  }
+
+  private async resolveConfiguration(service: Service, configuration?: PublicServiceConfiguration) {
+    return configuration || (await GitHub.fetchServiceConfiguration(service));
   }
 
   private getContainerNameForService(service: Service) {

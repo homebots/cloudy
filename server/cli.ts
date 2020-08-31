@@ -13,8 +13,10 @@ export async function cli(args: string[]) {
 
   switch (command) {
     case 'build':
-      await Services.build(service);
-      await Services.runInBackground(service);
+      const configuration = await GitHub.fetchServiceConfiguration(service);
+      await Services.create(service, configuration);
+      await Services.build(service, configuration);
+      await Services.runInBackground(service, configuration);
       Server.reload();
       break;
 
@@ -59,17 +61,17 @@ export async function cli(args: string[]) {
       await Services.runInBackground(service);
       break;
 
-    case 'build-all':
+    case 'restart-all':
       for (const service of Services.getStatus()) {
-        await Services.build(service);
+        await Services.stop(service);
         await Services.runInBackground(service);
       }
       Server.reload();
       break;
 
-    case 'deploy-all':
+    case 'build-all':
       for (const service of Services.getStatus()) {
-        await Services.stop(service);
+        await Services.build(service);
         await Services.runInBackground(service);
       }
       Server.reload();
