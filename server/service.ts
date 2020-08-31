@@ -113,7 +113,7 @@ class ServiceManager {
       ports,
     });
 
-    Nginx.registerService(serviceConfiguration);
+    await Nginx.registerService(serviceConfiguration);
     Nginx.reload();
   }
 
@@ -138,7 +138,7 @@ class ServiceManager {
 
     this.stop(service);
     Docker.deleteImage(imageName);
-    Nginx.unregisterService(configuration);
+    await Nginx.unregisterService(configuration);
     Nginx.reload();
     this.services.delete(configuration.id);
   }
