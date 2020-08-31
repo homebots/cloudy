@@ -14,5 +14,6 @@
     "experimentalDecorators": true,
     "outDir": "./build/"
   },
-  "includes": ["./server/**/*.ts"]
+  "includes": ["./server/**/*.ts"],
+  "exclude": ["node_modules/**"]
 }

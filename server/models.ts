@@ -1,5 +1,3 @@
-import { PortSpecification } from './docker';
-
 export interface ServiceConfiguration {
   id: string;
   name: string;
@@ -8,10 +6,14 @@ export interface ServiceConfiguration {
   repository: string;
   webSocket?: { path: string };
   domains: string[];
-  ports: Array<PortSpecification>;
   env: Record<string, string | number>;
   memory?: string;
   online?: boolean;
+  ports: {
+    port: number;
+    hostPort: number;
+    webSocketPort?: number;
+  };
 }
 
 export interface PublicServiceConfiguration {

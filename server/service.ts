@@ -95,7 +95,13 @@ class ServiceManager {
     const imageName = this.getImageNameForService(service);
     const containerName = this.getContainerNameForService(service);
     const volumes = [{ host: join('data', serviceConfiguration.id), container: CONTAINER_DATA_DIR }];
-    const ports = serviceConfiguration.ports;
+    const ports: PortSpecification[] = [];
+    const { hostPort, port, webSocketPort } = serviceConfiguration.ports;
+
+    ports.push([hostPort, port]);
+    if (!!webSocketPort) {
+      ports.push([webSocketPort, webSocketPort]);
+    }
 
     this.stop(service);
     image.run({
@@ -185,10 +191,8 @@ class ServiceManager {
       PORT: containerPort,
     };
 
-    const ports: PortSpecification[] = [hostPort !== containerPort ? [hostPort, containerPort] : [hostPort]];
     if (hasWebSocket) {
       env.WEBSOCKET_PORT = this.getRandomPort();
-      ports.push([env.WEBSOCKET_PORT]);
     }
 
     return {
@@ -200,8 +204,12 @@ class ServiceManager {
       memory: service.memory,
       webSocket,
       domains,
-      ports,
       env,
+      ports: {
+        port: containerPort,
+        hostPort,
+        webSocketPort: Number(env.WEBSOCKET_PORT),
+      },
     };
   }
 

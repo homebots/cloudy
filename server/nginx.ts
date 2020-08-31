@@ -20,10 +20,12 @@ class NginxManager {
   }
 
   private async createConfigurationForService(service: ServiceConfiguration) {
+    const { hostPort, webSocketPort } = service.ports;
+
     const vars = {
       id: service.name,
-      port: service.env.PORT,
-      webSocketPort: service.env.WEBSOCKET_PORT,
+      port: hostPort,
+      webSocketPort: webSocketPort || '',
       domains: service.domains.join(' '),
     };
 
