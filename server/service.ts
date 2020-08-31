@@ -47,7 +47,7 @@ class ServiceManager {
   }
 
   async create(service: Service, configuration?: PublicServiceConfiguration) {
-    logger.debug('create', service);
+    logger.debug('create', service, configuration);
     const id = this.getServiceId(service);
 
     if (this.services.has(id)) return;
@@ -64,7 +64,7 @@ class ServiceManager {
   }
 
   async build(service: Service, configuration?: PublicServiceConfiguration) {
-    logger.debug('build', service);
+    logger.debug('build', service, configuration);
     const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
     const serviceType = this.resolveServiceType(publicConfiguration.type);
@@ -83,7 +83,7 @@ class ServiceManager {
   }
 
   async runInBackground(service: Service, configuration?: PublicServiceConfiguration) {
-    logger.debug('run in background', service);
+    logger.debug('run in background', service, configuration);
     const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
     const image = this.getImageFromServiceType(serviceConfiguration.type);
@@ -97,6 +97,7 @@ class ServiceManager {
     const volumes = [{ host: join('data', serviceConfiguration.id), container: CONTAINER_DATA_DIR }];
     const ports = serviceConfiguration.ports;
 
+    this.stop(service);
     image.run({
       detached: true,
       imageName,
@@ -111,7 +112,7 @@ class ServiceManager {
   }
 
   async runAndExit(service: Service, configuration?: PublicServiceConfiguration) {
-    logger.debug('run and exit', service);
+    logger.debug('run and exit', service, configuration);
     const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const { type } = publicConfiguration;
     const serviceConfiguration = this.getServiceConfiguration({ ...service, type });
