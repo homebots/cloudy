@@ -9,8 +9,7 @@
   },
   "scripts": {
     "start": "node index.js",
-    "build": "./node_modules/.bin/tsc",
-    "postinstall": "./node_modules/.bin/tsc"
+    "build": "./node_modules/.bin/tsc"
   },
   "repository": {
     "type": "git",

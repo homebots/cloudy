@@ -9,6 +9,7 @@ class ServerManager {
     try {
       Shell.execAndLog('git', ['pull', '--rebase']);
       Shell.execAndLog('npm', ['ci']);
+      Shell.execAndLog('npm', ['run', 'build']);
     } catch (error) {
       logger.error(error.message);
     }
