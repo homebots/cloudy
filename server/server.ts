@@ -7,8 +7,8 @@ const logger = Log.create('server');
 class ServerManager {
   updateRepository() {
     try {
-      Shell.exec('git', ['pull', '--rebase']);
-      Shell.exec('npm', ['ci']);
+      Shell.execAndLog('git', ['pull', '--rebase']);
+      Shell.execAndLog('npm', ['ci']);
     } catch (error) {
       logger.error(error.message);
     }
