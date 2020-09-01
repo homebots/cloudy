@@ -21,9 +21,7 @@ export async function cli(args: string[]) {
       break;
 
     case 'run':
-      await Services.build(service);
       await Services.runAndExit(service);
-      Server.reload();
       break;
 
     case 'destroy':

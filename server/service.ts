@@ -120,15 +120,33 @@ class ServiceManager {
   async runAndExit(service: Service, configuration?: PublicServiceConfiguration) {
     logger.debug('run and exit', service, configuration);
     const publicConfiguration = await this.resolveConfiguration(service, configuration);
-    const { type } = publicConfiguration;
-    const serviceConfiguration = this.getServiceConfiguration({ ...service, type });
-    const image = this.getImageFromServiceType(serviceConfiguration.type);
+    const serviceType = this.resolveServiceType(publicConfiguration.type);
+    const serviceConfiguration = this.getServiceConfiguration({ ...service, type: serviceType });
     const envVars = Object.assign({}, serviceConfiguration.env, { GA_TRACKING_ID: '' });
+    const image = this.getImageFromServiceType(serviceType);
+    const gitUrl = GitHub.getCloneUrl(service.repository);
 
-    image.run({
-      imageName: this.getImageNameForService(service),
-      envVars,
-    });
+    const buildArgs = {
+      GIT_URL: gitUrl,
+      GIT_BRANCH: service.branch,
+    };
+
+    const imageName = 'run-' + Math.random() * 9999;
+
+    try {
+      image.build({
+        imageName,
+        buildArguments: buildArgs,
+      });
+
+      image.run({
+        imageName,
+        envVars,
+      });
+    } catch {
+    } finally {
+      Docker.deleteImage(imageName);
+    }
   }
 
   async destroy(service: Service) {
@@ -170,7 +188,7 @@ class ServiceManager {
   private getImageFromServiceType(serviceType?: string) {
     const image = serviceType && Docker.getBaseImage(serviceType);
     if (!image) {
-      throw new Error('Invalid service type');
+      throw new Error('Invalid service type: ' + serviceType);
     }
 
     return image;

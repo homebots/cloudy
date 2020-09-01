@@ -38,6 +38,26 @@ export async function api() {
     });
   });
 
+  Http.when(Post, '/run', async (request, response) => {
+    const { repository, branch } = request.body as Service;
+    const service = { repository, branch };
+    const serviceKey = KeyManager.getServiceKey(service);
+
+    if (!serviceKey || !Http.checkProtectedRoute(request, serviceKey)) {
+      response.send(401);
+      return;
+    }
+
+    setTimeout(async () => {
+      try {
+        response.send(202, Services.runAndExit(service));
+      } catch (error) {
+        console.error('Failed to run', service, error);
+        response.send(500);
+      }
+    });
+  });
+
   Http.when(Post, '/destroy', async (request, response) => {
     const service = request.body as Service;
     const serviceKey = KeyManager.getServiceKey(service);
