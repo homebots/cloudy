@@ -104,8 +104,7 @@ class ServiceManager {
     }
 
     this.stop(service);
-    image.run({
-      detached: true,
+    image.runSync({
       imageName,
       containerName,
       envVars,
@@ -139,10 +138,18 @@ class ServiceManager {
         buildArguments: buildArgs,
       });
 
-      image.run({
+      const childProcess = image.runAsync({
         imageName,
         envVars,
       });
+
+      const onTerminate = () => {
+        childProcess.terminate();
+        process.exit(0);
+      };
+
+      process.on('SIGTERM', onTerminate);
+      process.on('SIGINT', onTerminate);
     } catch {
     } finally {
       Docker.deleteImage(imageName);

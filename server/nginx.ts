@@ -39,7 +39,7 @@ class NginxManager {
 
   async removeAllSites() {
     try {
-      Shell.exec('rm', ['nginx-sites/*']);
+      Shell.execSync('rm', ['nginx-sites/*']);
     } catch {}
   }
 
@@ -53,8 +53,8 @@ class NginxManager {
 
   reload() {
     try {
-      Shell.exec('nginx', ['-t']);
-      Shell.exec('service', ['nginx', 'reload']);
+      Shell.execSync('nginx', ['-t']);
+      Shell.execSync('service', ['nginx', 'reload']);
     } catch (error) {
       logger.error('Failed to reload Nginx configuration!');
       logger.debug(error);

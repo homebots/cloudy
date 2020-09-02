@@ -1,6 +1,6 @@
 import { join, readDirectory } from './io.js';
 import { Log } from './log.js';
-import { Shell } from './shell.js';
+import { Shell, ExecAsync } from './shell.js';
 
 export type PortSpecification = [number, number?];
 export type VolumeSpecification = { host: string; container: string; flags?: string };
@@ -47,7 +47,6 @@ interface DockerStatus {
 interface RunOptions {
   imageName: string;
   containerName?: string;
-  detached?: boolean;
   volumes?: VolumeSpecification[];
   ports?: PortSpecification[];
   envVars?: Record<string, string | number>;
@@ -78,9 +77,17 @@ class DockerImage {
     }
   }
 
-  run(options: RunOptions) {
+  runSync(options: RunOptions) {
+    return this.runImage(options, true) as string;
+  }
+
+  runAsync(options: RunOptions) {
+    return this.runImage(options, false) as ExecAsync;
+  }
+
+  private runImage(options: RunOptions, runDetached: boolean) {
     const shellArgs = ['run', '--rm'];
-    if (options.detached) {
+    if (runDetached) {
       shellArgs.push('-d');
     }
 
@@ -116,7 +123,12 @@ class DockerImage {
 
     try {
       shellArgs.push(options.imageName);
-      Shell.execAndLog('docker', shellArgs);
+
+      if (!runDetached) {
+        return Shell.exec('docker', shellArgs);
+      }
+
+      return Shell.execAndLog('docker', shellArgs);
     } catch (error) {
       logger.error(error);
       throw new Error('Failed to run image:\n' + error.message);
@@ -144,11 +156,11 @@ export class DockerService {
   }
 
   getRunningContainers() {
-    return Shell.exec('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').filter(Boolean);
+    return Shell.execSync('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').filter(Boolean);
   }
 
   getAllImages() {
-    return Shell.exec('docker', ['image', 'ls', '--format', '"{{.Repository}}"'])
+    return Shell.execSync('docker', ['image', 'ls', '--format', '"{{.Repository}}"'])
       .trim()
       .split('\n')
       .filter((s) => s !== '<none>');
@@ -159,7 +171,7 @@ export class DockerService {
   }
 
   deleteImage(imageName: string) {
-    Shell.exec('docker', ['image', 'rm', imageName]);
+    Shell.execSync('docker', ['image', 'rm', imageName]);
   }
 
   getBaseImage(imageName: string) {
@@ -187,7 +199,7 @@ export class DockerService {
     const containerNames = this.getRunningContainers();
 
     const containers: DockerRawStatus[] = containerNames.length
-      ? JSON.parse(Shell.exec('docker', ['inspect', ...containerNames]))
+      ? JSON.parse(Shell.execSync('docker', ['inspect', ...containerNames]))
       : [];
 
     return containers.map((container) => {
