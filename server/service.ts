@@ -86,7 +86,8 @@ class ServiceManager {
     logger.debug('run in background', service, configuration);
     const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
-    const image = this.getImageFromServiceType(serviceConfiguration.type);
+    const serviceType = this.resolveServiceType(publicConfiguration.type);
+    const image = this.getImageFromServiceType(serviceType);
     const envVars = Object.assign({}, serviceConfiguration.env, {
       DATA_DIR: CONTAINER_DATA_DIR,
       GA_TRACKING_ID: '',
