@@ -19,17 +19,17 @@ function printHelp() {
     ## Repository commands
     Usage: cy <command> repository [branch]
 
-      cy create
-      cy build
-      cy destroy
+      cy create                       Create a service
+      cy build                        Create/build/deploy a service
+      cy destroy                      Stop container, destroy image and remove service
 
-      cy create-key
-      cy get-key
-      cy delete-key
+      cy create-key                   Create GitHub webhook key for auto-deploy
+      cy get-key                      Retrieve service key (if exists)
+      cy delete-key                   Delete a deploy key
 
-      cy start
-      cy stop
-      cy restart
+      cy start                        Start a container from previously build image
+      cy stop                         Stop container of a running service
+      cy restart                      Stop and start again a service container
   `);
 }
 export async function cli(args: string[]) {
