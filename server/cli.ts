@@ -112,7 +112,7 @@ export async function cli(args: string[]) {
       services = Services.getStatus().map((service) => ({
         id: `${service.name}`,
         type: service.type,
-        online: `[${service.online ? 'v' : '!'}]`,
+        online: `${service.online ? '  -  ' : '[ ! ]'}`,
         origin: (service.repository + ' ' + ((service.branch !== 'master' && service.branch) || '')).trim(),
         key: KeyManager.getServiceKey(service),
       }));
