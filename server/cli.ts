@@ -4,6 +4,33 @@ import { Service } from './models.js';
 import { GitHub } from './github.js';
 import { KeyManager } from './keys.js';
 
+function printHelp() {
+  console.log(`
+    ## Server management commands:
+
+      cy ls
+      cy build-all                    Rebuild all services and re-run containers
+      cy restart-all                  Redeploy all containers
+
+    ## Service commands:
+
+      cy run repository [branch]      Build, run and discard a project
+
+    ## Repository commands
+    Usage: cy <command> repository [branch]
+
+      cy build
+      cy destroy
+
+      cy create-key
+      cy get-key
+      cy delete-key
+
+      cy start
+      cy stop
+      cy restart
+  `);
+}
 export async function cli(args: string[]) {
   const command = args.shift();
   const [repository, branch] = args;
@@ -75,7 +102,6 @@ export async function cli(args: string[]) {
       Server.reload();
       break;
 
-    case 'list':
     case 'ls':
       services = Services.getStatus().map((service) => ({
         id: `${service.name}`,
@@ -99,6 +125,10 @@ export async function cli(args: string[]) {
 
     case 'status':
       return JSON.stringify(Services.getStatusOf(service), null, 2);
+
+    case 'help':
+      printHelp();
+      break;
 
     default:
       throw new Error('Invalid command!');
