@@ -19,6 +19,7 @@ function printHelp() {
     ## Repository commands
     Usage: cy <command> repository [branch]
 
+      cy create
       cy build
       cy destroy
 
@@ -39,6 +40,11 @@ export async function cli(args: string[]) {
   let services;
 
   switch (command) {
+    case 'create':
+      await Services.create(service);
+      Server.reload();
+      break;
+
     case 'build':
       const configuration = await GitHub.fetchServiceConfiguration(service);
       await Services.create(service, configuration);
