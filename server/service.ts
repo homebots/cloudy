@@ -10,7 +10,7 @@ import { join } from './io.js';
 const logger = Log.create('services');
 const cloudyDomain = process.env.CLOUDY_DOMAIN || 'local';
 const sha256 = (value: import('crypto').BinaryLike) => createHash('sha256').update(value).digest('hex');
-const CONTAINER_DATA_DIR = '/opt/data';
+const containerDataDirectory = '/opt/data';
 
 const Docker = new DockerService('images');
 
@@ -25,6 +25,7 @@ class ServiceManager {
   building: boolean = false;
 
   private defaultServiceType = String(process.env.CLOUDY_DEFAULT_IMAGE);
+  private dockerRegistry = process.env.CLOUDY_DOCKER_REGISTRY || 'cloudy';
 
   constructor() {
     this.services = FileStorage.for('services');
@@ -89,13 +90,13 @@ class ServiceManager {
     const serviceType = this.resolveServiceType(publicConfiguration.type);
     const image = this.getImageFromServiceType(serviceType);
     const envVars = Object.assign({}, serviceConfiguration.env, {
-      DATA_DIR: CONTAINER_DATA_DIR,
+      DATA_DIR: containerDataDirectory,
       GA_TRACKING_ID: '',
     });
 
     const imageName = this.getImageNameForService(service);
     const containerName = this.getContainerNameForService(service);
-    const volumes = [{ host: join('data', serviceConfiguration.id), container: CONTAINER_DATA_DIR }];
+    const volumes = [{ host: join('data', serviceConfiguration.id), container: containerDataDirectory }];
     const ports: PortSpecification[] = [];
     const { hostPort, port, webSocketPort } = serviceConfiguration.ports;
 
@@ -183,7 +184,7 @@ class ServiceManager {
   }
 
   private getImageNameForService(service: Service) {
-    return 'cloudy/' + this.getContainerNameForService(service);
+    return this.dockerRegistry + '/' + this.getContainerNameForService(service);
   }
 
   private getServiceId(service: Service) {

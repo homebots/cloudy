@@ -78,7 +78,7 @@ export async function cli(args: string[]) {
     case 'list':
     case 'ls':
       services = Services.getStatus().map((service) => ({
-        id: `${service.id} ${service.name}`,
+        id: `${service.name}`,
         type: service.type,
         online: `[${service.online ? 'v' : '!'}]`,
         origin: service.repository + ' ' + service.branch,
