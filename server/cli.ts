@@ -110,7 +110,8 @@ export async function cli(args: string[]) {
 
     case 'ls':
       services = Services.getStatus().map((service) => ({
-        id: `${service.name}`,
+        id: service.id,
+        name: service.name,
         type: service.type,
         online: `${service.online ? '  -  ' : '[ ! ]'}`,
         origin: (service.repository + ' ' + ((service.branch !== 'master' && service.branch) || '')).trim(),
@@ -123,9 +124,11 @@ export async function cli(args: string[]) {
         return services.map((service: any) => service[field]).join('\n');
       }
 
+      const headers = ['---', 'Id', 'Container', 'Type', 'Origin', 'Key'];
+
       return formatList(
-        [['---', 'Id/Container', 'Type', 'Origin', 'Key'], Array(5).fill('')].concat(
-          services.map((_) => [_.online, _.id, _.type, _.origin, _.key]),
+        [headers, Array(headers.length).fill('')].concat(
+          services.map((_) => [_.online, _.id, _.name, _.type, _.origin, _.key]),
         ),
       );
 
