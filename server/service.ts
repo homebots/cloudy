@@ -179,13 +179,11 @@ class ServiceManager {
   }
 
   private getContainerNameForService(service: Service) {
-    const id = this.getServiceId(service);
-    return id.slice(0, 7);
+    return [service.repository, service.branch].join('_').replace(/\W+/g, '-');
   }
 
   private getImageNameForService(service: Service) {
-    const id = this.getServiceId(service);
-    return 'cloudy/' + id;
+    return 'cloudy/' + this.getContainerNameForService(service);
   }
 
   private getServiceId(service: Service) {
