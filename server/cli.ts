@@ -81,7 +81,7 @@ export async function cli(args: string[]) {
         id: `${service.name}`,
         type: service.type,
         online: `[${service.online ? 'v' : '!'}]`,
-        origin: service.repository + ' ' + service.branch,
+        origin: (service.repository + ' ' + ((service.branch !== 'master' && service.branch) || '')).trim(),
         key: KeyManager.getServiceKey(service),
       }));
 
@@ -96,6 +96,9 @@ export async function cli(args: string[]) {
           services.map((_) => [_.online, _.id, _.type, _.origin, _.key]),
         ),
       );
+
+    case 'status':
+      return JSON.stringify(Services.getStatusOf(service), null, 2);
 
     default:
       throw new Error('Invalid command!');

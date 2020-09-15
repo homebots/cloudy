@@ -42,6 +42,10 @@ class ServiceManager {
     }));
   }
 
+  getStatusOf(service: Service) {
+    return Docker.getStatus(this.getContainerNameForService(service));
+  }
+
   isOnline(service: Service, containers?: string[]) {
     containers = containers || Docker.getRunningContainers();
     return containers.includes(this.getContainerNameForService(service));

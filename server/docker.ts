@@ -195,8 +195,8 @@ export class DockerService {
     } catch {}
   }
 
-  getStatus(): DockerStatus[] {
-    const containerNames = this.getRunningContainers();
+  getStatus(containerName?: string): DockerStatus[] {
+    const containerNames = containerName ? [containerName] : this.getRunningContainers();
 
     const containers: DockerRawStatus[] = containerNames.length
       ? JSON.parse(Shell.execSync('docker', ['inspect', ...containerNames]))
@@ -225,7 +225,7 @@ export class DockerService {
       const env: Record<string, string> = {};
       container.Config.Env.forEach((envLine) => {
         const variable = envLine.split('=', 1)[0];
-        const value = envLine.slice(variable.length - 1);
+        const value = envLine.slice(variable.length + 1);
 
         env[variable] = value;
       });

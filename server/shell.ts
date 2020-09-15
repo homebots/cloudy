@@ -11,14 +11,6 @@ process.on('SIGINT', function () {
   process.exit();
 });
 
-const logPrefix = (string: string) =>
-  String(string)
-    .trim()
-    .split('\n')
-    .filter(Boolean)
-    .map((line: any) => `>> ${line}`)
-    .join('\n');
-
 export interface ExecAsync {
   child: ChildProcessWithoutNullStreams;
   terminated: boolean;
@@ -33,7 +25,7 @@ export class Shell {
       const output = Shell.execSync(command, args);
 
       if (output) {
-        logger.log(logPrefix(output));
+        logger.log(output);
       }
 
       return output;
@@ -73,7 +65,7 @@ export class Shell {
       execOutput.terminated = true;
     };
 
-    const onMessage = (message: string) => logger.log(logPrefix(message));
+    const onMessage = (message: string) => logger.log(message);
     const onError = (error: any) => logger.error(error);
 
     childProcess.addListener('close', onExit);
