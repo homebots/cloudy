@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { cli } from './build/cli.js';
 import { api } from './build/api.js';
 

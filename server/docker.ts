@@ -62,7 +62,7 @@ class DockerImage {
 
   build(options: BuildOptions) {
     try {
-      const shellArgs = ['build', '--quiet', '-t', options.imageName];
+      const shellArgs = ['build', '-t', options.imageName];
 
       Object.entries(options.buildArguments || {}).forEach(([key, value]) => {
         shellArgs.push('--build-arg', key + '=' + addSingleQuotes(escapeQuotes(String(value))));
