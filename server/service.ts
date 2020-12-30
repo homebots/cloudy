@@ -196,7 +196,7 @@ class ServiceManager {
     return sha256(repository + branch);
   }
 
-  private getImageFromServiceType(serviceType?: string) {
+  private getImageFromServiceType(serviceType: string = this.defaultServiceType) {
     const image = serviceType && Docker.getBaseImage(serviceType);
     if (!image) {
       throw new Error('Invalid service type: ' + serviceType);
