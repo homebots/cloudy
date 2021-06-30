@@ -97,4 +97,19 @@ export async function api() {
   });
 
   Http.listen(Number(process.env.PORT) || 9999, '127.0.0.1');
+
+  bootstrapAll();
+}
+
+async function bootstrapAll() {
+  console.log(process.env);
+
+  for (const service of Services.getStatus()) {
+    try {
+      await Services.stop(service);
+      await Services.runInBackground(service);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 }

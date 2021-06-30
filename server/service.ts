@@ -24,8 +24,13 @@ class ServiceManager {
   services: FileStorage<StoredService>;
   building: boolean = false;
 
-  private defaultServiceType = String(process.env.CLOUDY_DEFAULT_IMAGE);
-  private dockerRegistry = process.env.CLOUDY_DOCKER_REGISTRY || 'cloudy';
+  private get defaultServiceType() {
+    return String(process.env.CLOUDY_DEFAULT_IMAGE || 'node');
+  }
+
+  private get dockerRegistry() {
+    return process.env.CLOUDY_DOCKER_REGISTRY || 'cloudy';
+  }
 
   constructor() {
     this.services = FileStorage.for('services');
