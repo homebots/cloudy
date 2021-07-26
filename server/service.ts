@@ -4,7 +4,7 @@ import { FileStorage } from './storage.js';
 import { Log } from './log.js';
 import { Nginx } from './nginx.js';
 import { ServiceConfiguration, PublicServiceConfiguration, Service } from './models.js';
-import { DockerService, PortSpecification } from './docker.js';
+import { DockerService, DockerStatus, PortSpecification } from './docker.js';
 import { join } from './io.js';
 
 const logger = Log.create('services');
@@ -47,8 +47,8 @@ class ServiceManager {
     }));
   }
 
-  getStatusOf(service: Service) {
-    return Docker.getStatus(this.getContainerNameForService(service))[0];
+  getStatusOf(service: Service): DockerStatus | null {
+    return Docker.getStatus(this.getContainerNameForService(service))[0] || null;
   }
 
   isOnline(service: Service, containers?: string[]) {

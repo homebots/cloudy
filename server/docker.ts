@@ -43,8 +43,9 @@ interface DockerRawStatus {
   };
 }
 
-interface DockerStatus {
+export interface DockerStatus {
   id: string;
+  online: boolean;
   name: string;
   image: string;
   ports: PortSpecification[];
@@ -163,22 +164,22 @@ export class DockerService {
     this.baseImages = await readDirectory(this.imagesFolder);
   }
 
-  getRunningContainers() {
+  getRunningContainers(): string[] {
     return Shell.execSync('docker', ['ps', '--format', '"{{.Names}}"']).trim().split('\n').filter(Boolean);
   }
 
-  getAllImages() {
+  getAllImages(): string[] {
     return Shell.execSync('docker', ['image', 'ls', '--format', '"{{.Repository}}"'])
       .trim()
       .split('\n')
-      .filter((s) => s !== '<none>');
+      .filter((s: string) => s !== '<none>');
   }
 
-  hasBaseImage(imageName: string) {
+  hasBaseImage(imageName: string): boolean {
     return this.baseImages.includes(imageName);
   }
 
-  deleteImage(imageName: string) {
+  deleteImage(imageName: string): void {
     Shell.execSync('docker', ['image', 'rm', imageName]);
   }
 

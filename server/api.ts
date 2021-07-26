@@ -106,8 +106,11 @@ async function bootstrapAll() {
 
   for (const service of Services.getStatus()) {
     try {
-      await Services.stop(service);
-      await Services.runInBackground(service);
+      const status = Services.getStatusOf(service);
+
+      if (!status?.online) {
+        await Services.runInBackground(service);
+      }
     } catch (error) {
       console.error(error);
     }

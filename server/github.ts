@@ -29,7 +29,7 @@ class GithubService {
 
   getServiceFromWebhook(pushWebHook: IncomingWebhook): Service {
     try {
-      const branch = pushWebHook.ref ? pushWebHook.ref.replace(/^refs\/.+\//, '') : 'master';
+      const branch = pushWebHook.ref ? pushWebHook.ref.replace(/^refs\/.+?\//, '') : 'master';
       const repository = pushWebHook.repository.full_name;
 
       if (pushWebHook.repository.private) {
