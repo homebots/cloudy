@@ -17,6 +17,14 @@ interface DockerRawStatus {
     Status: string;
     Running: boolean;
     Paused: boolean;
+    Restarting: boolean;
+    OOMKilled: boolean;
+    Dead: boolean;
+    Pid: number;
+    ExitCode: number;
+    Error: string;
+    StartedAt: string;
+    FinishedAt: string;
   };
   Mounts: {
     Source: '/home/cloudy/data/7891687e56510ac3948ba7599f71e88974cc95d249f67a45d3bdeea162c1717c';
@@ -204,6 +212,7 @@ export class DockerService {
 
     return containers.map((container) => {
       const ports: PortSpecification[] = [];
+      const online = container.State.Running;
 
       Object.entries(container.NetworkSettings.Ports)
         .filter(([_, value]) => !!value)
@@ -232,6 +241,7 @@ export class DockerService {
 
       return {
         id: container.Id,
+        online,
         name: container.Name.slice(1),
         image: container.Image,
         ports,
