@@ -92,6 +92,10 @@ export async function cli(args: string[]) {
       await Services.runInBackground(service);
       break;
 
+    case 'logs':
+      await Services.getLogs(service);
+      break;
+
     case 'restart-all':
       for (const service of Services.getStatus()) {
         await Services.stop(service);

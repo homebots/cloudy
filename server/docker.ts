@@ -206,6 +206,10 @@ export class DockerService {
     } catch {}
   }
 
+  getLogs(name: string): string {
+    return Shell.execSync('docker', ['logs', name]);
+  }
+
   getStatus(containerName?: string): DockerStatus[] {
     const containerNames = containerName ? [containerName] : this.getRunningContainers();
 

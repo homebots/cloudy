@@ -48,7 +48,11 @@ class ServiceManager {
   }
 
   getStatusOf(service: Service): DockerStatus | null {
-    return Docker.getStatus(this.getContainerNameForService(service))[0] || null;
+    try {
+      return Docker.getStatus(this.getContainerNameForService(service))[0] || null;
+    } catch {
+      return null;
+    }
   }
 
   isOnline(service: Service, containers?: string[]) {
@@ -90,6 +94,13 @@ class ServiceManager {
       imageName: this.getImageNameForService(serviceConfiguration),
       buildArguments: buildArgs,
     });
+  }
+
+  getLogs(service: Service) {
+    const containerName = this.getContainerNameForService(service);
+    const logs = Docker.getLogs(containerName);
+
+    return logs;
   }
 
   async runInBackground(service: Service, configuration?: PublicServiceConfiguration) {
