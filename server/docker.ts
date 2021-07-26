@@ -180,7 +180,9 @@ export class DockerService {
   }
 
   deleteImage(imageName: string): void {
-    Shell.execSync('docker', ['image', 'rm', imageName]);
+    try {
+      Shell.execAndLog('docker', ['image', 'rm', imageName]);
+    } catch {}
   }
 
   getBaseImage(imageName: string) {

@@ -102,8 +102,6 @@ export async function api() {
 }
 
 async function bootstrapAll() {
-  console.log(process.env);
-
   for (const service of Services.getStatus()) {
     try {
       const status = Services.getStatusOf(service);
