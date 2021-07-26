@@ -129,6 +129,7 @@ class DockerImage {
 
     const maxMemory = process.env.CLOUDY_MAX_MEMORY || '32mb';
     shellArgs.push(`--memory=${maxMemory}`, '--cpus=1');
+    shellArgs.push('--log-driver=journald');
 
     try {
       shellArgs.push(options.imageName);
