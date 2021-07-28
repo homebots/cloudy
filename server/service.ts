@@ -100,7 +100,7 @@ class ServiceManager {
     const containerName = this.getContainerNameForService(service);
     const logs = Docker.getLogs(containerName);
 
-    return logs;
+    console.log(logs);
   }
 
   async runInBackground(service: Service, configuration?: PublicServiceConfiguration) {

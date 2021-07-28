@@ -15,6 +15,8 @@ function printHelp() {
     ## Service commands:
 
       cy run repository [branch]      Build, run and discard a project
+      cy logs repository [branch]     View logs for a service
+      cy status repository [branch]   View status for a service
 
     ## Repository commands
     Usage: cy <command> repository [branch]
@@ -93,7 +95,7 @@ export async function cli(args: string[]) {
       break;
 
     case 'logs':
-      await Services.getLogs(service);
+      Services.getLogs(service);
       break;
 
     case 'restart-all':
