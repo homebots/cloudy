@@ -13,6 +13,7 @@ class NginxManager {
 
     try {
       await writeFile(`nginx-sites/${service.id}.conf`, content);
+      logger.log('Wrote configuration', content);
     } catch (error) {
       logger.error('Failed to create Nginx configuration!');
       logger.debug(error);

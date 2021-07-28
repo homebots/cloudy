@@ -141,6 +141,8 @@ class ServiceManager {
     const publicConfiguration = await this.resolveConfiguration(service, configuration);
     const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
 
+    logger.debug(`Update configuration of ${service.repository} [${service.branch}]`, serviceConfiguration);
+
     return this.updateNginxOfService(serviceConfiguration);
   }
 
