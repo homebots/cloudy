@@ -134,7 +134,18 @@ class ServiceManager {
       ports,
     });
 
-    await Nginx.registerService(serviceConfiguration);
+    this.updateNginxOfService(serviceConfiguration);
+  }
+
+  async updateNginx(service: Service, configuration?: PublicServiceConfiguration) {
+    const publicConfiguration = await this.resolveConfiguration(service, configuration);
+    const serviceConfiguration = this.getServiceConfiguration({ ...service, ...publicConfiguration });
+
+    return this.updateNginxOfService(serviceConfiguration);
+  }
+
+  private async updateNginxOfService(service: ServiceConfiguration) {
+    await Nginx.registerService(service);
     Nginx.reload();
   }
 
@@ -230,6 +241,7 @@ class ServiceManager {
     const domains = [service.domain || name + '.' + cloudyDomain];
     const hasWebSocket = Boolean(service.webSocket && service.webSocket.path);
     const webSocket = hasWebSocket ? { path: service.webSocket!.path } : undefined;
+    const httpsRedirect = service.httpsRedirect !== undefined ? service.httpsRedirect : true;
 
     const env: Record<string, string | number> = {
       ...(service.env || {}),
@@ -247,6 +259,7 @@ class ServiceManager {
       branch: service.branch,
       repository: service.repository,
       memory: service.memory,
+      httpsRedirect,
       webSocket,
       domains,
       env,

@@ -19,6 +19,30 @@ class NginxManager {
     }
   }
 
+  async unregisterService(service: ServiceConfiguration) {
+    if (await exists('nginx-sites', `${service.id}.conf`)) {
+      return await deleteFile('nginx-sites', `${service.id}.conf`);
+    }
+
+    return null;
+  }
+
+  async removeAllSites() {
+    try {
+      Shell.execSync('rm', ['nginx-sites/*']);
+    } catch {}
+  }
+
+  reload() {
+    try {
+      Shell.execSync('nginx', ['-t']);
+      Shell.execSync('service', ['nginx', 'reload']);
+    } catch (error) {
+      logger.error('Failed to reload Nginx configuration!');
+      logger.debug(error);
+    }
+  }
+
   private async createConfigurationForService(service: ServiceConfiguration) {
     const { hostPort, webSocketPort } = service.ports;
 
@@ -30,35 +54,12 @@ class NginxManager {
     };
 
     const template = await readFile('server', 'service.conf');
-    const templateWithWebSockets = template
+    const configuration = template
+      .replace('%httpsRedirect%', service.httpsRedirect === false ? '' : 'return 301 https://$host$request_uri;')
       .replace('%webSocket%', this.getWebSocketConfig(service))
       .replace('%secureWebSocket%', this.getWebSocketConfig(service, true));
 
-    return replaceVars(templateWithWebSockets, vars);
-  }
-
-  async removeAllSites() {
-    try {
-      Shell.execSync('rm', ['nginx-sites/*']);
-    } catch {}
-  }
-
-  async unregisterService(service: ServiceConfiguration) {
-    if (await exists('nginx-sites', `${service.id}.conf`)) {
-      return await deleteFile('nginx-sites', `${service.id}.conf`);
-    }
-
-    return null;
-  }
-
-  reload() {
-    try {
-      Shell.execSync('nginx', ['-t']);
-      Shell.execSync('service', ['nginx', 'reload']);
-    } catch (error) {
-      logger.error('Failed to reload Nginx configuration!');
-      logger.debug(error);
-    }
+    return replaceVars(configuration, vars);
   }
 
   private getWebSocketConfig(service: ServiceConfiguration, isSecure = false) {

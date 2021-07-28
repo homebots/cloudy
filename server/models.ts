@@ -4,6 +4,7 @@ export interface ServiceConfiguration {
   type: string;
   branch: string;
   repository: string;
+  httpsRedirect: boolean;
   webSocket?: { path: string };
   domains: string[];
   env: Record<string, string | number>;
@@ -23,6 +24,7 @@ export interface PublicServiceConfiguration {
   env?: Record<string, string | number>;
   webSocket?: { path: string };
   memory?: string;
+  httpsRedirect?: boolean;
 }
 
 export interface Service {

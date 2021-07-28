@@ -17,6 +17,7 @@ function printHelp() {
       cy run repository [branch]      Build, run and discard a project
       cy logs repository [branch]     View logs for a service
       cy status repository [branch]   View status for a service
+      cy update-nginx repository [branch]   Recreate configuration for Nginx proxy
 
     ## Repository commands
     Usage: cy <command> repository [branch]
@@ -92,6 +93,10 @@ export async function cli(args: string[]) {
     case 'restart':
       await Services.stop(service);
       await Services.runInBackground(service);
+      break;
+
+    case 'update-nginx':
+      await Services.updateNginx(service);
       break;
 
     case 'logs':

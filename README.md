@@ -1,8 +1,8 @@
 # Cloudy
 
-Cloudy is **a tiny REST API to deploy micro services** from GitHub repositories. It has **no dependencies**.
+Cloudy is **a tiny REST API to deploy services** from GitHub repositories using Docker. It has **no runtime dependencies**.
 
-It works by receiving GitHub WebHook calls, cloning the source code and running it inside a Docker container.
+Cloudy works by receiving GitHub WebHook calls, cloning the source code, building it and running inside a Docker container.
 
 > SEE ALSO:
 >
@@ -14,18 +14,20 @@ A push to a GitHub repo will trigger a webhook.
 
 The service will then clone the source repository and deploy it to a Docker container, using one of the base images.
 
-A reverse proxy with Nginx should be set up in the host machine to map the domains to docker containers.
+> Note: A reverse proxy with Nginx is required in the host machine to map the domains to docker containers.
 
 ## How to run the Cloudy server
 
-Define the domain where the Cloudy service will run:
+Define the domain where the Cloudy service will run in an environment variable:
 
 ```
 exports CLOUDY_DOMAIN='your-domain.com'
 exports PORT=9999
 ```
 
-Then just run `index.js` on a host machine with Docker. Use [`pm2`](https://www.npmjs.com/package/pm2) to allow the service to restart when updates are available.
+Then just run Cloudy on a host machine with Docker.
+
+Use [`pm2`](https://www.npmjs.com/package/pm2) to allow the service to restart when updates are available.
 E.g. `pm2 start --name cloudy npm start`
 
 ## Service configurations
@@ -57,7 +59,10 @@ NOTE: They are all **optional**
   // redirected to 'http://localhost:{WEBSOCKET_PORT}/ws'
   webSocket: {
     "path": "/ws"
-  }
+  },
+
+  // automatically redirect http links to https. Default is `true`
+  httpsRedirect: true
 }
 ```
 
@@ -101,18 +106,3 @@ Go to the `Repository Settings > Webhooks` and add a new webhook (https://github
 - Secret: `4de1f5aab51b969dace864d506ad88cd1bd4c5c710b6145ff2e196012f3d292f` (from previous step)
 
 And done! Now every commit will redeploy that repo in a Docker Container!
-
-# Service Object
-
-```
-id:             string,
-type:           'node' | 'nginx'
-url:            'https://github.com/org/repo',
-branch:         "master",
-repository:     'org/repo',
-webSocket:       { }
-domains:        string[],
-ports:          number[] | [number, number][]
-env:            { "KEY": "value" },
-memory:         50mb
-```

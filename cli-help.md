@@ -35,36 +35,36 @@ cy destroy repository
 cy destroy repository branch-name
 ```
 
-# ls, list
+# ls
 
 ```bash
 # List all registered services
-cy list
+cy ls
 
 # List all registered services, printing only the 'origin' column
-cy list origin
+cy ls origin
 ```
 
 # destroy
 
 ```bash
-cy destroy repository [master]
-cy destroy repository branch-name
+cy destroy repository
+cy destroy repository [branch-name]
 ```
 
 # stop / start / restart
 
 ```bash
-cy stop repository master
-cy start repository branch-name
+cy stop repository
+cy start repository [branch-name]
 cy restart repository
 ```
 
 # update-nginx
 
 ```bash
-# recreate the server configuration for all registered services
-cy update-nginx
+# recreate the server configuration
+cy update-nginx repository [branch-name]
 ```
 
 # build-all / deploy-all
